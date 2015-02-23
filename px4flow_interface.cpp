@@ -75,7 +75,7 @@ get_time_usec()
 //   Con/De structors
 // ------------------------------------------------------------------------------
 PX4Flow_Interface::
-PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, std::vector<float> *data_)
+PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_)
 {
 	// initialize attributes
 	write_count = 0;
@@ -98,6 +98,7 @@ PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, std::vector<float> *dat
 	serial_port = serial_port_; // serial port management object
 
 	msgUserID = msgID_;
+	msgUserFieldName = msgFieldName_;
 	data = data_;
 }
 
@@ -143,36 +144,78 @@ read_messages()
 
 				case MAVLINK_MSG_ID_HEARTBEAT: // #0
 				{
-					printf("MAVLINK_MSG_ID_HEARTBEAT\n");
+					// printf("MAVLINK_MSG_ID_HEARTBEAT\n");
 					mavlink_msg_heartbeat_decode(&message, &(current_messages.heartbeat));
 					current_messages.time_stamps.heartbeat = get_time_usec();
 					this_timestamps.heartbeat = current_messages.time_stamps.heartbeat;
-					break;
-				}
+					
+					enum Fields{
+						type, autopilot, base_mode, custom_mode, system_status, mavlink_version
+					};
 
-				case MAVLINK_MSG_ID_SYS_STATUS:
-				{
-					printf("MAVLINK_MSG_ID_SYS_STATUS\n");
-					mavlink_msg_sys_status_decode(&message, &(current_messages.sys_status));
-					current_messages.time_stamps.sys_status = get_time_usec();
-					this_timestamps.sys_status = current_messages.time_stamps.sys_status;
+					switch(msgUserFieldName){
+						case type:
+							data->push_back((float) current_messages.heartbeat.type);
+							break;
+					case autopilot:
+							data->push_back((float) current_messages.heartbeat.autopilot);
+							break;	
+					case base_mode:
+							data->push_back((float) current_messages.heartbeat.base_mode);
+							break;
+					case custom_mode:
+							data->push_back((float) current_messages.heartbeat.custom_mode);
+							break;
+					case system_status:
+							data->push_back((float) current_messages.heartbeat.system_status);
+							break;
+					case mavlink_version:
+							data->push_back((float) current_messages.heartbeat.mavlink_version);
+							break;
+					default:
+							// ########## SAIR DO PGM? ##########
+							break;						
+					}
+
 					break;
 				}
 
 				case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE: // #130
 				{
-					printf("MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE\n");
+					// printf("MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE\n");
 					mavlink_msg_data_transmission_handshake_decode(&message, &(current_messages.data_transmission_handshake));
 					current_messages.time_stamps.data_transmission_handshake = get_time_usec();
 					this_timestamps.data_transmission_handshake = current_messages.time_stamps.data_transmission_handshake;
 
-					uint8_t type;
-					uint32_t size;
-					uint16_t width;
-					uint16_t height;
-					uint16_t packets;
-					uint8_t payload;
-					uint8_t jpg_quality;
+					enum Fields{
+						type, size, width, height, packets, payload, jpg_quality
+					};
+
+					switch(msgUserFieldName){
+						case type:
+							data->push_back((float) current_messages.data_transmission_handshake.type);
+							break;
+						case size:
+							data->push_back((float) current_messages.data_transmission_handshake.size);
+							break;
+						case width:
+							data->push_back((float) current_messages.data_transmission_handshake.width);
+							break;
+						case height:
+							data->push_back((float) current_messages.data_transmission_handshake.height);
+							break;
+						case packets:
+							data->push_back((float) current_messages.data_transmission_handshake.packets);
+							break;
+						case payload:
+							data->push_back((float) current_messages.data_transmission_handshake.payload);
+							break;
+						case jpg_quality:
+							data->push_back((float) current_messages.data_transmission_handshake.jpg_quality);
+							break;
+						default:
+							break;
+					}
 
 					break;
 				}
@@ -184,14 +227,32 @@ read_messages()
 					current_messages.time_stamps.encapsulated_data = get_time_usec();
 					this_timestamps.encapsulated_data = current_messages.time_stamps.encapsulated_data;
 
-					printf("\n----------------------------------------------\n%d: ", current_messages.encapsulated_data.seqnr);
+					enum Fields{
+						seqnr, data
+					};
 
-					uint8_t *img = current_messages.encapsulated_data.data;
+					switch(msgUserFieldName){
+						case seqnr:
+								// error: base operand of ‘->’ is not a pointer
+								// data->push_back((float) current_messages.encapsulated_data.seqnr); 
+							break;
+						
+						case data:
+						{
+							// implementar
+							printf("\n----------------------------------------------\n%d: ", current_messages.encapsulated_data.seqnr);
 
-					for (int i = 0; i < 253; ++i)
-					{
-						printf("%d ", *img);
-						img++;
+							uint8_t *img = current_messages.encapsulated_data.data;
+
+							for (int i = 0; i < 253; ++i){
+								printf("%d ", *img);
+								img++;
+							}
+						}break;
+
+						default:
+							break;
+
 					}
 
 					break;
@@ -204,15 +265,96 @@ read_messages()
 					current_messages.time_stamps.optical_flow = get_time_usec();
 					this_timestamps.optical_flow = current_messages.time_stamps.optical_flow;
 					// data->push_back(current_messages.optical_flow.flow_x);
+
+					enum Fields{
+						time_usec, sensor_id, flow_x, flow_y, flow_comp_m_x, flow_comp_m_y, quality, ground_distance
+					};
+
+					switch(msgUserFieldName){
+						case time_usec:
+							data->push_back((float) current_messages.optical_flow.time_usec);
+							break;
+						case sensor_id:
+							data->push_back((float) current_messages.optical_flow.sensor_id);
+							break;
+						case flow_x:
+							data->push_back((float) current_messages.optical_flow.flow_x);
+							break;
+						case flow_y:
+							data->push_back((float) current_messages.optical_flow.flow_y);
+							break;
+						case flow_comp_m_x:
+							data->push_back((float) current_messages.optical_flow.flow_comp_m_x);
+							break;
+						case flow_comp_m_y:
+							data->push_back((float) current_messages.optical_flow.flow_comp_m_y);
+							break;
+						case quality:
+							data->push_back((float) current_messages.optical_flow.quality);
+							break;
+						case ground_distance:
+							data->push_back((float) current_messages.optical_flow.ground_distance);
+							break;
+						default:
+							break;
+					}
+
 					break;
 				}
 
 				case MAVLINK_MSG_ID_OPTICAL_FLOW_RAD: // #106
 				{
-					printf("MAVLINK_MSG_ID_OPTICAL_FLOW_RAD\n");
+					// printf("MAVLINK_MSG_ID_OPTICAL_FLOW_RAD\n");
 					mavlink_msg_optical_flow_rad_decode(&message, &(current_messages.optical_flow_rad));
 					current_messages.time_stamps.optical_flow_rad = get_time_usec();
 					this_timestamps.optical_flow_rad = current_messages.time_stamps.optical_flow_rad;
+
+					enum Fields{
+						time_usec, sensor_id, integration_time_us, integrated_x, integrated_y, integrated_xgyro,
+						integrated_ygyro, integrated_zgyro, temperature, quality, time_delta_distance_us, distance
+					};
+
+					switch(msgUserFieldName){
+						case time_usec:
+							data->push_back((float) current_messages.optical_flow_rad.time_usec);
+							break;
+						case sensor_id:
+							data->push_back((float) current_messages.optical_flow_rad.sensor_id);
+							break;
+						case integration_time_us:
+							data->push_back((float) current_messages.optical_flow_rad.integration_time_us);
+							break;
+						case integrated_x:
+							data->push_back((float) current_messages.optical_flow_rad.integrated_x);
+							break;
+						case integrated_y:
+							data->push_back((float) current_messages.optical_flow_rad.integrated_y);
+							break;
+						case integrated_xgyro:
+							data->push_back((float) current_messages.optical_flow_rad.integrated_xgyro);
+							break;
+						case integrated_ygyro:
+							data->push_back((float) current_messages.optical_flow_rad.integrated_ygyro);
+							break;
+						case integrated_zgyro:
+							data->push_back((float) current_messages.optical_flow_rad.integrated_zgyro);
+							break;
+						case temperature:
+							data->push_back((float) current_messages.optical_flow_rad.temperature);
+							break;
+						case quality:
+							data->push_back((float) current_messages.optical_flow_rad.quality);
+							break;
+						case time_delta_distance_us:
+							data->push_back((float) current_messages.optical_flow_rad.time_delta_distance_us);
+							break;
+						case distance:
+							data->push_back((float) current_messages.optical_flow_rad.distance);
+							break;
+						default:
+							break;
+					}
+
 					break;
 				}
 
@@ -222,25 +364,87 @@ read_messages()
 					mavlink_msg_debug_vect_decode(&message, &(current_messages.debug_vect));
 					current_messages.time_stamps.debug_vect = get_time_usec();
 					this_timestamps.debug_vect = current_messages.time_stamps.debug_vect;
-					data->push_back(current_messages.debug_vect.z);
+
+					enum Fields{
+						name, time_usec, x, y, z
+					};
+
+					switch(msgUserFieldName){
+						case name:
+							// data->push_back((float) current_messages.debug_vect.name); // ########## CHAR ##########
+							break;
+						case time_usec:
+							data->push_back((float) current_messages.debug_vect.time_usec);
+							break;
+						case x:
+							data->push_back((float) current_messages.debug_vect.x);
+							break;
+						case y:
+							data->push_back((float) current_messages.debug_vect.y);
+							break;
+						case z:
+							data->push_back((float) current_messages.debug_vect.z);
+							break;
+						default:
+							break;
+					}
+
 					break;
 				}
 
 				case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT: // #251
 				{
-					printf("MAVLINK_MSG_ID_NAMED_VALUE_FLOAT\n");
+					// printf("MAVLINK_MSG_ID_NAMED_VALUE_FLOAT\n");
 					mavlink_msg_named_value_float_decode(&message, &(current_messages.named_value_float));
 					current_messages.time_stamps.named_value_float = get_time_usec();
 					this_timestamps.named_value_float = current_messages.time_stamps.named_value_float;
+
+					enum Fields{
+						time_boot_ms, name, value
+					};
+
+					switch(msgUserFieldName){
+						case time_boot_ms:
+							data->push_back((float) current_messages.named_value_float.time_boot_ms);
+							break;
+						case name:
+							// data->push_back((float) current_messages.named_value_float.name); // ########## CHAR ##########
+							break;
+						case value:
+							data->push_back((float) current_messages.named_value_float.value);
+							break;
+						default:
+							break;
+					}
+
 					break;
 				}
 
 				case MAVLINK_MSG_ID_NAMED_VALUE_INT: // #252
 				{
-					printf("MAVLINK_MSG_ID_NAMED_VALUE_INT\n");
+					// printf("MAVLINK_MSG_ID_NAMED_VALUE_INT\n");
 					mavlink_msg_named_value_int_decode(&message, &(current_messages.named_value_int));
 					current_messages.time_stamps.named_value_int = get_time_usec();
 					this_timestamps.named_value_int = current_messages.time_stamps.named_value_int;
+
+					enum Fields{
+						time_boot_ms, name, value
+					};
+
+					switch(msgUserFieldName){
+						case time_boot_ms:
+							data->push_back((float) current_messages.named_value_int.time_boot_ms);
+							break;
+						case name:
+							// data->push_back((float) current_messages.named_value_int.name); // ########## CHAR ##########
+							break;
+						case value:
+							data->push_back((float) current_messages.named_value_int.value);
+							break;
+						default:
+							break;
+					}
+
 					break;
 				}
 

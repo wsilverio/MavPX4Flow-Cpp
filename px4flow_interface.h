@@ -90,7 +90,6 @@ struct Time_Stamps
 	}
 
 	uint64_t heartbeat;
-	uint64_t sys_status;
 	uint64_t data_transmission_handshake;
 	uint64_t encapsulated_data;
 	uint64_t optical_flow;
@@ -103,7 +102,6 @@ struct Time_Stamps
 	reset_timestamps()
 	{
 		heartbeat = 0;
-		sys_status = 0;
 		data_transmission_handshake = 0;
 		encapsulated_data = 0;
 		optical_flow = 0;
@@ -125,9 +123,6 @@ struct Mavlink_Messages {
 
 	// Heartbeat
 	mavlink_heartbeat_t heartbeat;
-
-	// System Status
-	mavlink_sys_status_t sys_status;
 
 	// Data Transmission Handshake
 	mavlink_data_transmission_handshake_t data_transmission_handshake;
@@ -187,7 +182,7 @@ class PX4Flow_Interface
 public:
 
 	PX4Flow_Interface();
-	PX4Flow_Interface(Serial_Port *serial_port_, int msgIDm, std::vector<float> *data_);
+	PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_);
 	~PX4Flow_Interface();
 
 	char reading_status;
@@ -199,6 +194,7 @@ public:
 	int px4flow_id;
 	int companion_id;
 	int msgUserID;
+	int msgUserFieldName;
 
 	std::vector<float> *data;
 
