@@ -28,9 +28,9 @@ PX4Flow_Interface *px4flow_interface_quit; // função quit_handler()
 //      "-d": configura o dispositivo serial
 //      "-b": configura a taxa de comunicação (bps)
 //      "-id": configura o ID da mensagem Mavlink
-void argparse(int argc, char **argv, char *&uart_name, int &baudrate){
+void Argparse(int argc, char **argv, char *&uart_name, int &baudrate){
 
-    const char *help_msg = "Uso:\n$ ./mavpx4flow.run -d <dispositivo> -b <baudrate> -id <msgid>\n";
+    const char *help_msg = "Uso:\n$ ./mavpx4flow.run -d <dispositivo> -b <baudrate>\n";
 
     if(argc < 2){
         printf("%s\n", help_msg);
@@ -74,7 +74,7 @@ void argparse(int argc, char **argv, char *&uart_name, int &baudrate){
 //   Quit Signal Handler
 // ------------------------------------------------------------------------------
 // Esta função é chamada quando o usuário pressiona ^C (Ctrl-C)
-void quit_handler(int sig){
+void Quit_Handler(int sig){
 
     printf("\n\n### PEDIDO DE TÉRMINO DE EXECUÇÃO ###\n\n");
 
@@ -95,7 +95,7 @@ void quit_handler(int sig){
 //   Map - https://processing.org/reference/map_.html
 // ------------------------------------------------------------------------------
 // Re-maps a number from one range to another.
-inline float map(float value, float start1, float stop1, float start2, float stop2){
+float Map(float value, float start1, float stop1, float start2, float stop2){
     return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
 }
 
@@ -130,7 +130,11 @@ int main(int argc, char **argv){
     // Padrão
     char *uart_name = (char*)"/dev/ttyACM0";
     int baudrate = 57600;
-    int msgID, msgFieldName;
+
+    // Tratamento da linha de comando
+    Argparse(argc, argv, uart_name, baudrate);
+
+    int msgID, msgFieldName, msgFieldType;
 
     std::string windowName;
 
@@ -146,6 +150,18 @@ int main(int argc, char **argv){
             DEBUG_VECT,
             NAMED_VALUE_FLOAT,
             NAMED_VALUE_INT
+        };
+
+        enum MSGFIELDTYPE{
+            VECTOR_UINT64_T,
+            VECTOR_INT32_T,
+            VECTOR_UINT32_T,
+            VECTOR_INT16_T,
+            VECTOR_UINT16_T,
+            VECTOR_UINT8_T,
+            VECTOR_FLOAT,
+            ARRAY_UINT8_T,
+            ARRAY_CHAR
         };
 
         #define TAM 8
@@ -181,6 +197,7 @@ int main(int argc, char **argv){
 
                 #define TAM 6
                 const char *fields[TAM] = {"type", "autopilot", "base_mode", "custom_mode", "system_status", "mavlink_version"};
+                const int types[TAM] = {VECTOR_UINT8_T, VECTOR_UINT8_T, VECTOR_UINT8_T, VECTOR_UINT32_T, VECTOR_UINT8_T, VECTOR_UINT8_T};
 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
                 
@@ -198,6 +215,7 @@ int main(int argc, char **argv){
                     throw EXIT_FAILURE;
                 }
 
+                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -210,7 +228,8 @@ int main(int argc, char **argv){
 
                 #define TAM 7
                 const char *fields[TAM] = {"type", "size", "width", "height", "packets", "payload", "jpg_quality"};
-                
+                const int types[TAM] = {VECTOR_UINT8_T, VECTOR_UINT32_T, VECTOR_UINT16_T, VECTOR_UINT16_T, VECTOR_UINT16_T, VECTOR_UINT8_T, VECTOR_UINT8_T};
+
                 printf("\nEscolha o Field Name da mensagem:\n\n");
                 
                 for (int i = 0; i < TAM; ++i){
@@ -227,6 +246,7 @@ int main(int argc, char **argv){
                     throw EXIT_FAILURE;
                 }
 
+                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -239,6 +259,7 @@ int main(int argc, char **argv){
 
                 #define TAM 2
                 const char *fields[TAM] = {"seqnr", "data"};
+                const int types[TAM] = {VECTOR_UINT16_T, ARRAY_UINT8_T};
                 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
 
@@ -256,6 +277,7 @@ int main(int argc, char **argv){
                     throw EXIT_FAILURE;
                 }
 
+                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -268,6 +290,7 @@ int main(int argc, char **argv){
 
                 #define TAM 8
                 const char *fields[TAM] = {"time_usec", "sensor_id", "flow_x", "flow_y", "flow_comp_m_x", "flow_comp_m_y", "quality", "ground_distance"};
+                const int types[TAM] = {VECTOR_UINT64_T, VECTOR_UINT8_T, VECTOR_INT16_T, VECTOR_INT16_T, VECTOR_FLOAT, VECTOR_FLOAT, VECTOR_UINT8_T, VECTOR_FLOAT};
 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
 
@@ -285,6 +308,7 @@ int main(int argc, char **argv){
                     throw EXIT_FAILURE;
                 }
 
+                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -298,6 +322,8 @@ int main(int argc, char **argv){
                 #define TAM 12
                 const char *fields[TAM] = { "time_usec", "sensor_id", "integration_time_us", "integrated_x", "integrated_y", "integrated_xgyro",
                                             "integrated_ygyro", "integrated_zgyro", "temperature", "quality", "time_delta_distance_us", "distance"};
+                const int types[TAM] = {VECTOR_UINT64_T, VECTOR_UINT8_T, VECTOR_UINT32_T, VECTOR_FLOAT, VECTOR_FLOAT, VECTOR_FLOAT,
+                                        VECTOR_FLOAT, VECTOR_FLOAT, VECTOR_INT16_T, VECTOR_UINT8_T, VECTOR_UINT32_T, VECTOR_FLOAT};
                 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
 
@@ -315,6 +341,7 @@ int main(int argc, char **argv){
                     throw EXIT_FAILURE;
                 }
 
+                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -327,6 +354,7 @@ int main(int argc, char **argv){
 
                 #define TAM 5
                 const char *fields[TAM] = {"name", "time_usec", "x", "y", "z"};
+                const int types[TAM] = {ARRAY_CHAR, VECTOR_UINT64_T, VECTOR_FLOAT};
                 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
                 
@@ -344,6 +372,7 @@ int main(int argc, char **argv){
                     throw EXIT_FAILURE;
                 }
 
+                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -356,6 +385,7 @@ int main(int argc, char **argv){
 
                 #define TAM 3
                 const char *fields[TAM] = {"time_boot_ms", "name", "value"};
+                const int types[TAM] = {VECTOR_UINT32_T, ARRAY_CHAR, VECTOR_FLOAT};
                 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
                 
@@ -373,6 +403,7 @@ int main(int argc, char **argv){
                     throw EXIT_FAILURE;
                 }
 
+                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -385,6 +416,7 @@ int main(int argc, char **argv){
 
                 #define TAM 3
                 const char *fields[TAM] = {"time_boot_ms", "name", "value"};
+                const int types[TAM] = {VECTOR_UINT32_T, ARRAY_CHAR, VECTOR_INT32_T};
                 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
                 
@@ -402,6 +434,7 @@ int main(int argc, char **argv){
                     throw EXIT_FAILURE;
                 }
 
+                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -415,19 +448,17 @@ int main(int argc, char **argv){
             break; // ?
         }
 
-        std::vector<float> data;
-
-        // Tratamento da linha de comando
-        argparse(argc, argv, uart_name, baudrate);
+        // std::vector<float> data;
+        Common_Types Data;
 
         Serial_Port serial_port(uart_name, baudrate);
-        serial_port_quit = &serial_port; // função quit_handler()
+        serial_port_quit = &serial_port; // função Quit_Handler()
 
-        PX4Flow_Interface px4flow(&serial_port, msgID, msgFieldName, &data);
-        px4flow_interface_quit = &px4flow; // função quit_handler()
+        PX4Flow_Interface px4flow(&serial_port, msgID, msgFieldName, &Data);
+        px4flow_interface_quit = &px4flow; // função Quit_Handler()
 
-        // Associa ^C à função quit_handler()
-        signal(SIGINT, quit_handler);
+        // Associa ^C à função Quit_Handler()
+        signal(SIGINT, Quit_Handler);
 
         // Abre a porta e inicializa a comunicação serial
         serial_port.start();
@@ -437,30 +468,84 @@ int main(int argc, char **argv){
         cv::Mat imagemPlot;
         cv::namedWindow(windowName, CV_WINDOW_AUTOSIZE);
 
-        for(;;){
+        switch(msgFieldType){
 
-            #define WIDTH 1280
-            #define HEIGHT 720
+            case VECTOR_UINT64_T:
+            {
 
-            imagemPlot = cv::Mat(HEIGHT, WIDTH, CV_8UC3, cv::Scalar(54,54,54));
+            }break;
 
-            if (data.size() > WIDTH)
-                data.erase(data.begin());
+            case VECTOR_INT32_T:
+            {
 
-            float min, max;
-            MinMaxElement(data, min, max);
-            
+            }break;
 
-            for(int i = 1; i < data.size(); i++)
-                cv::line(imagemPlot, cv::Point(i-1, HEIGHT/2.0 + 31*data[i-1]), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
+            case VECTOR_UINT32_T:
+            {
 
-            cv::putText(imagemPlot, std::to_string(data.back()), cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(68,225,242), 1, CV_AA);
+            }break;
 
-            cv::imshow(windowName, imagemPlot);
-            
-            char c = (char) cvWaitKey(1);
-            if(c == 27) quit_handler(c); // ESC key
+            case VECTOR_INT16_T:
+            {
+
+            }break;
+
+            case VECTOR_UINT16_T:
+            {
+
+            }break;
+
+            case VECTOR_UINT8_T:
+            {
+
+            }break;
+
+            case VECTOR_FLOAT:
+            {
+
+            }break;
+
+            case ARRAY_UINT8_T:
+            {
+                
+            }break;
+
+            case ARRAY_CHAR:
+            {
+
+            }break;
+
+            default:
+            {
+
+            }break;
+
         }
+
+        // for(;;){
+
+        //     #define WIDTH 1280
+        //     #define HEIGHT 720
+
+        //     imagemPlot = cv::Mat(HEIGHT, WIDTH, CV_8UC3, cv::Scalar(54,54,54));
+
+        //     if (data.size() > WIDTH)
+        //         data.erase(data.begin());
+
+        //     float min, max;
+        //     MinMaxElement(data, min, max);
+
+        //     for(int i = 1; i < data.size(); i++)
+        //         if (min == max) cv::line(imagemPlot, cv::Point(i-1, HEIGHT/2.0), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
+        //         else            cv::line(imagemPlot, cv::Point(i-1, Map(data[i-1], min, max, HEIGHT, 0)), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
+
+        //     cv::putText(imagemPlot, std::to_string(data.back()), cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(68,225,242), 1, CV_AA);
+
+        //     cv::imshow(windowName, imagemPlot);
+            
+        //     char c = (char) cvWaitKey(1);
+        //     if(c == 27) Quit_Handler(c); // ESC key
+        // }
 
 
     }

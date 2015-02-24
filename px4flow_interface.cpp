@@ -75,7 +75,7 @@ get_time_usec()
 //   Con/De structors
 // ------------------------------------------------------------------------------
 PX4Flow_Interface::
-PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_)
+PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, Common_Types *Data_)
 {
 	// initialize attributes
 	write_count = 0;
@@ -99,7 +99,7 @@ PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std:
 
 	msgUserID = msgID_;
 	msgUserFieldName = msgFieldName_;
-	data = data_;
+	Data = Data_;
 }
 
 PX4Flow_Interface::
@@ -144,7 +144,14 @@ read_messages()
 
 				case MAVLINK_MSG_ID_HEARTBEAT: // #0
 				{
-					// printf("MAVLINK_MSG_ID_HEARTBEAT\n");
+					// uint32_t custom_mode
+					// uint8_t type
+					// uint8_t autopilot
+					// uint8_t base_mode
+					// uint8_t system_status
+					// uint8_t mavlink_version
+
+					printf("MAVLINK_MSG_ID_HEARTBEAT\n");
 					mavlink_msg_heartbeat_decode(&message, &(current_messages.heartbeat));
 					current_messages.time_stamps.heartbeat = get_time_usec();
 					this_timestamps.heartbeat = current_messages.time_stamps.heartbeat;
@@ -157,22 +164,22 @@ read_messages()
 						case type:
 							data->push_back((float) current_messages.heartbeat.type);
 							break;
-					case autopilot:
+						case autopilot:
 							data->push_back((float) current_messages.heartbeat.autopilot);
 							break;	
-					case base_mode:
+						case base_mode:
 							data->push_back((float) current_messages.heartbeat.base_mode);
 							break;
-					case custom_mode:
+						case custom_mode:
 							data->push_back((float) current_messages.heartbeat.custom_mode);
 							break;
-					case system_status:
+						case system_status:
 							data->push_back((float) current_messages.heartbeat.system_status);
 							break;
-					case mavlink_version:
+						case mavlink_version:
 							data->push_back((float) current_messages.heartbeat.mavlink_version);
 							break;
-					default:
+						default:
 							// ########## SAIR DO PGM? ##########
 							break;						
 					}
@@ -182,6 +189,14 @@ read_messages()
 
 				case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE: // #130
 				{
+					// uint32_t size
+					// uint16_t width
+					// uint16_t height
+					// uint16_t packets
+					// uint8_t type
+					// uint8_t payload
+					// uint8_t jpg_quality
+
 					// printf("MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE\n");
 					mavlink_msg_data_transmission_handshake_decode(&message, &(current_messages.data_transmission_handshake));
 					current_messages.time_stamps.data_transmission_handshake = get_time_usec();
@@ -222,6 +237,9 @@ read_messages()
 
 				case MAVLINK_MSG_ID_ENCAPSULATED_DATA: // #131
 				{
+					// uint16_t seqnr
+					// uint8_t data[253]
+
 					// printf("MAVLINK_MSG_ID_ENCAPSULATED_DATA\n");
 					mavlink_msg_encapsulated_data_decode(&message, &(current_messages.encapsulated_data));
 					current_messages.time_stamps.encapsulated_data = get_time_usec();
@@ -260,6 +278,15 @@ read_messages()
 
 				case MAVLINK_MSG_ID_OPTICAL_FLOW: // #100
 				{
+					// uint64_t time_usec
+					// float flow_comp_m_x
+					// float flow_comp_m_y
+					// float ground_distance
+					// int16_t flow_x
+					// int16_t flow_y
+					// uint8_t sensor_id
+					// uint8_t quality
+
 					// printf("MAVLINK_MSG_ID_OPTICAL_FLOW\n");
 					mavlink_msg_optical_flow_decode(&message, &(current_messages.optical_flow));
 					current_messages.time_stamps.optical_flow = get_time_usec();
@@ -304,6 +331,19 @@ read_messages()
 
 				case MAVLINK_MSG_ID_OPTICAL_FLOW_RAD: // #106
 				{
+					// uint64_t time_usec
+					// uint32_t integration_time_us
+					// float integrated_x
+					// float integrated_y
+					// float integrated_xgyro
+					// float integrated_ygyro
+					// float integrated_zgyro
+					// uint32_t time_delta_distance_us
+					// float distance
+					// int16_t temperature
+					// uint8_t sensor_id
+					// uint8_t quality
+
 					// printf("MAVLINK_MSG_ID_OPTICAL_FLOW_RAD\n");
 					mavlink_msg_optical_flow_rad_decode(&message, &(current_messages.optical_flow_rad));
 					current_messages.time_stamps.optical_flow_rad = get_time_usec();
@@ -360,6 +400,12 @@ read_messages()
 
 				case MAVLINK_MSG_ID_DEBUG_VECT: // #250
 				{
+					// uint64_t time_usec
+					// float x
+					// float y
+					// float z
+					// char name[10]
+
 					// printf("MAVLINK_MSG_ID_DEBUG_VECT\n");
 					mavlink_msg_debug_vect_decode(&message, &(current_messages.debug_vect));
 					current_messages.time_stamps.debug_vect = get_time_usec();
@@ -394,6 +440,10 @@ read_messages()
 
 				case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT: // #251
 				{
+					// uint32_t time_boot_ms
+					// float value
+					// char name[10]
+
 					// printf("MAVLINK_MSG_ID_NAMED_VALUE_FLOAT\n");
 					mavlink_msg_named_value_float_decode(&message, &(current_messages.named_value_float));
 					current_messages.time_stamps.named_value_float = get_time_usec();
@@ -422,6 +472,10 @@ read_messages()
 
 				case MAVLINK_MSG_ID_NAMED_VALUE_INT: // #252
 				{
+					// uint32_t time_boot_ms
+					// int32_t value
+ 					// char name[10]
+
 					// printf("MAVLINK_MSG_ID_NAMED_VALUE_INT\n");
 					mavlink_msg_named_value_int_decode(&message, &(current_messages.named_value_int));
 					current_messages.time_stamps.named_value_int = get_time_usec();
