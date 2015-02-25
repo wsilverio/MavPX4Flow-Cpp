@@ -6,15 +6,17 @@
 #include <cstdlib>  // EXIT_FAILURE
 #include <signal.h> // signal
 
-#include <common/mavlink.h> // msgID
-#include "serial_port.h" // Serial_Port
-#include "px4flow_interface.h" // PX4Flow_Interface
+#include <common/mavlink.h>     // Protocolo Mavlink
+#include "serial_port.h"        // Serial_Port
+#include "px4flow_interface.h"  // PX4Flow_Interface
 
-#include <vector>
-#include <iostream>
-#include <string> // std::to_string
+#include <iostream>     // std::cout
+#include <vector>       // std::vector<>    
+#include <string>       // std::to_string
+#include <algorithm>    // std::min_element, std::max_element
+#include <math.h>       // fabs
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp> // rotinas OpenCV
 
 // Global
 Serial_Port *serial_port_quit; // função quit_handler()
@@ -27,10 +29,9 @@ PX4Flow_Interface *px4flow_interface_quit; // função quit_handler()
 //      "-h" ou "--help": exibe a mensagem de ajuda
 //      "-d": configura o dispositivo serial
 //      "-b": configura a taxa de comunicação (bps)
-//      "-id": configura o ID da mensagem Mavlink
 void Argparse(int argc, char **argv, char *&uart_name, int &baudrate){
 
-    const char *help_msg = "Uso:\n$ ./mavpx4flow.run -d <dispositivo> -b <baudrate>\n";
+    const char *help_msg = "\nUso:\n$ ./mavpx4flow.run -d <dispositivo> -b <baudrate>\n";
 
     if(argc < 2){
         printf("%s\n", help_msg);
@@ -66,14 +67,14 @@ void Argparse(int argc, char **argv, char *&uart_name, int &baudrate){
         }
     }
 
-    printf("Device: %s\nBaud rate: %d\n", uart_name, baudrate);
+    printf("\nDevice: %s\nBaud rate: %d\n\n", uart_name, baudrate);
     return;
 }
 
 // ------------------------------------------------------------------------------
 //   Quit Signal Handler
 // ------------------------------------------------------------------------------
-// Esta função é chamada quando o usuário pressiona ^C (Ctrl-C)
+// Esta função é chamada quando o usuário pressiona ^C (Ctrl-C) sobre o terminal ou ESC sobre a janela
 void Quit_Handler(int sig){
 
     printf("\n\n### PEDIDO DE TÉRMINO DE EXECUÇÃO ###\n\n");
@@ -92,40 +93,22 @@ void Quit_Handler(int sig){
 }
 
 // ------------------------------------------------------------------------------
-//   Map - https://processing.org/reference/map_.html
+//   Map - http://openframeworks.cc/documentation/math/ofMath.html#!show_ofMap
 // ------------------------------------------------------------------------------
 // Re-maps a number from one range to another.
-float Map(float value, float start1, float stop1, float start2, float stop2){
-    return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
+float Map(float value, float inputMin, float inputMax, float outputMin, float outputMax){
+    if (fabs(inputMin - inputMax) < FLT_EPSILON)
+        return outputMin;
+    else
+        return outputMin + (outputMax - outputMin) * ((value - inputMin) / (inputMax - inputMin));
 }
 
 // ------------------------------------------------------------------------------
-//   Vetor - mínimo e máximo
+//   Main
 // ------------------------------------------------------------------------------
-// Armazena o maior e o menor elemento de um vetor
-int MinMaxElement(std::vector<int> & v, int & min, int & max) {
-    min = max = v[0];
-
-    for (register unsigned int i = 1; i < v.size(); ++i) {
-        if (v[i] < min) min = v[i];
-        else if (v[i] > max) max = v[i];
-    }
-}
-
-// ------------------------------------------------------------------------------
-//   Vetor - mínimo e máximo
-// ------------------------------------------------------------------------------
-// Armazena o maior e o menor elemento de um vetor
-float MinMaxElement(std::vector<float> & v, float & min, float & max) {
-    min = max = v[0];
-
-    for (register unsigned int i = 1; i < v.size(); ++i) {
-        if (v[i] < min) min = v[i];
-        else if (v[i] > max) max = v[i];
-    }
-}
-
 int main(int argc, char **argv){
+
+    printf("\n### MavPX4Flow ###\n");
 
     // Padrão
     char *uart_name = (char*)"/dev/ttyACM0";
@@ -134,13 +117,14 @@ int main(int argc, char **argv){
     // Tratamento da linha de comando
     Argparse(argc, argv, uart_name, baudrate);
 
-    int msgID, msgFieldName, msgFieldType;
+    // Relacionadas a, por ex.:
+    // OPTICAL_FLOW, flow_x
+    int msgID, msgFieldName;
 
     std::string windowName;
 
     try
     {
-        
         enum MSGID{
             HEARTBEAT,
             DATA_TRANSMISSION_HANDSHAKE,
@@ -152,20 +136,8 @@ int main(int argc, char **argv){
             NAMED_VALUE_INT
         };
 
-        enum MSGFIELDTYPE{
-            VECTOR_UINT64_T,
-            VECTOR_INT32_T,
-            VECTOR_UINT32_T,
-            VECTOR_INT16_T,
-            VECTOR_UINT16_T,
-            VECTOR_UINT8_T,
-            VECTOR_FLOAT,
-            ARRAY_UINT8_T,
-            ARRAY_CHAR
-        };
-
         #define TAM 8
-        const char *fields[TAM] = 
+        const char *names[TAM] = 
         {
             "HEARTBEAT",
             "DATA_TRANSMISSION_HANDSHAKE",
@@ -177,11 +149,10 @@ int main(int argc, char **argv){
             "NAMED_VALUE_INT"
         };
 
-        printf("\n### MavPX4Flow ###\n");
         printf("Escolha a mensagem Mavlink:\n\n");
 
         for (int i = 0; i < TAM; ++i){
-            printf("{%d} %s\n", i, fields[i]);
+            printf("{%d} %s\n", i, names[i]);
         }
 
         printf("Mensagem: ");
@@ -189,6 +160,7 @@ int main(int argc, char **argv){
         msgID = -1;
         scanf("%d", &msgID);
 
+        // Verifica o ID selecionado pelo usuário
         switch(msgID){
             case HEARTBEAT:
             {
@@ -197,7 +169,6 @@ int main(int argc, char **argv){
 
                 #define TAM 6
                 const char *fields[TAM] = {"type", "autopilot", "base_mode", "custom_mode", "system_status", "mavlink_version"};
-                const int types[TAM] = {VECTOR_UINT8_T, VECTOR_UINT8_T, VECTOR_UINT8_T, VECTOR_UINT32_T, VECTOR_UINT8_T, VECTOR_UINT8_T};
 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
                 
@@ -211,11 +182,10 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou não implementado ***\n\n");
+                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
-                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -228,7 +198,6 @@ int main(int argc, char **argv){
 
                 #define TAM 7
                 const char *fields[TAM] = {"type", "size", "width", "height", "packets", "payload", "jpg_quality"};
-                const int types[TAM] = {VECTOR_UINT8_T, VECTOR_UINT32_T, VECTOR_UINT16_T, VECTOR_UINT16_T, VECTOR_UINT16_T, VECTOR_UINT8_T, VECTOR_UINT8_T};
 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
                 
@@ -242,11 +211,10 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou não implementado ***\n\n");
+                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
-                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -259,7 +227,6 @@ int main(int argc, char **argv){
 
                 #define TAM 2
                 const char *fields[TAM] = {"seqnr", "data"};
-                const int types[TAM] = {VECTOR_UINT16_T, ARRAY_UINT8_T};
                 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
 
@@ -273,11 +240,10 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou não implementado ***\n\n");
+                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
-                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -290,7 +256,6 @@ int main(int argc, char **argv){
 
                 #define TAM 8
                 const char *fields[TAM] = {"time_usec", "sensor_id", "flow_x", "flow_y", "flow_comp_m_x", "flow_comp_m_y", "quality", "ground_distance"};
-                const int types[TAM] = {VECTOR_UINT64_T, VECTOR_UINT8_T, VECTOR_INT16_T, VECTOR_INT16_T, VECTOR_FLOAT, VECTOR_FLOAT, VECTOR_UINT8_T, VECTOR_FLOAT};
 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
 
@@ -303,12 +268,11 @@ int main(int argc, char **argv){
                 msgFieldName = -1;
                 scanf("%d", &msgFieldName);
 
-                if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou não implementado ***\n\n");
+                if (msgFieldName < 0 || msgFieldName >= TAM || msgFieldName == 0){ // time_usec desabilitado
+                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
-                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -322,8 +286,6 @@ int main(int argc, char **argv){
                 #define TAM 12
                 const char *fields[TAM] = { "time_usec", "sensor_id", "integration_time_us", "integrated_x", "integrated_y", "integrated_xgyro",
                                             "integrated_ygyro", "integrated_zgyro", "temperature", "quality", "time_delta_distance_us", "distance"};
-                const int types[TAM] = {VECTOR_UINT64_T, VECTOR_UINT8_T, VECTOR_UINT32_T, VECTOR_FLOAT, VECTOR_FLOAT, VECTOR_FLOAT,
-                                        VECTOR_FLOAT, VECTOR_FLOAT, VECTOR_INT16_T, VECTOR_UINT8_T, VECTOR_UINT32_T, VECTOR_FLOAT};
                 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
 
@@ -336,12 +298,11 @@ int main(int argc, char **argv){
                 msgFieldName = -1;
                 scanf("%d", &msgFieldName);
 
-                if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou não implementado ***\n\n");
+                if (msgFieldName < 0 || msgFieldName >= TAM || msgFieldName == 0){ // time_usec desabilitado
+                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
-                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -354,7 +315,6 @@ int main(int argc, char **argv){
 
                 #define TAM 5
                 const char *fields[TAM] = {"name", "time_usec", "x", "y", "z"};
-                const int types[TAM] = {ARRAY_CHAR, VECTOR_UINT64_T, VECTOR_FLOAT};
                 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
                 
@@ -367,12 +327,11 @@ int main(int argc, char **argv){
                 msgFieldName = -1;
                 scanf("%d", &msgFieldName);
 
-                if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou não implementado ***\n\n");
+                if (msgFieldName < 0 || msgFieldName >= TAM || msgFieldName == 1){ // time_usec desabilitado
+                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
-                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -385,7 +344,6 @@ int main(int argc, char **argv){
 
                 #define TAM 3
                 const char *fields[TAM] = {"time_boot_ms", "name", "value"};
-                const int types[TAM] = {VECTOR_UINT32_T, ARRAY_CHAR, VECTOR_FLOAT};
                 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
                 
@@ -399,11 +357,10 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou não implementado ***\n\n");
+                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
-                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -416,7 +373,6 @@ int main(int argc, char **argv){
 
                 #define TAM 3
                 const char *fields[TAM] = {"time_boot_ms", "name", "value"};
-                const int types[TAM] = {VECTOR_UINT32_T, ARRAY_CHAR, VECTOR_INT32_T};
                 
                 printf("\nEscolha o Field Name da mensagem:\n\n");
                 
@@ -430,11 +386,10 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou não implementado ***\n\n");
+                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
-                msgFieldType = types[msgFieldName];
                 windowName += fields[msgFieldName];
 
             }
@@ -448,16 +403,20 @@ int main(int argc, char **argv){
             break; // ?
         }
 
-        // std::vector<float> data;
-        Common_Types Data;
+        // Vetor que contém o histórico de dados
+        std::vector<float> data;
 
+        // Gerenciador serial
         Serial_Port serial_port(uart_name, baudrate);
-        serial_port_quit = &serial_port; // função Quit_Handler()
+        // Controlador de saída. Ver função Quit_Handler()
+        serial_port_quit = &serial_port;
 
-        PX4Flow_Interface px4flow(&serial_port, msgID, msgFieldName, &Data);
-        px4flow_interface_quit = &px4flow; // função Quit_Handler()
+        // Gerenciador Mavlink
+        PX4Flow_Interface px4flow(&serial_port, msgID, msgFieldName, &data);
+        // Controlador de saída. Ver função Quit_Handler()
+        px4flow_interface_quit = &px4flow;
 
-        // Associa ^C à função Quit_Handler()
+        // Associa ^C (ctrl+c) à função Quit_Handler()
         signal(SIGINT, Quit_Handler);
 
         // Abre a porta e inicializa a comunicação serial
@@ -465,88 +424,51 @@ int main(int argc, char **argv){
         // Inicializa a comunicação Mavlink (thread)
         px4flow.start();
 
+        // Buffer da imagem a ser plotada
         cv::Mat imagemPlot;
+        // Janela que conterá a imagem
         cv::namedWindow(windowName, CV_WINDOW_AUTOSIZE);
 
-        switch(msgFieldType){
+        for(;;){
 
-            case VECTOR_UINT64_T:
-            {
+            // Parâmetros da imagem
+            #define WIDTH 1280
+            #define HEIGHT 720
 
-            }break;
+            // Imagem vazia, com background
+            imagemPlot = cv::Mat(HEIGHT, WIDTH, CV_8UC3, cv::Scalar(54,54,54));
 
-            case VECTOR_INT32_T:
-            {
-
-            }break;
-
-            case VECTOR_UINT32_T:
-            {
-
-            }break;
-
-            case VECTOR_INT16_T:
-            {
-
-            }break;
-
-            case VECTOR_UINT16_T:
-            {
-
-            }break;
-
-            case VECTOR_UINT8_T:
-            {
-
-            }break;
-
-            case VECTOR_FLOAT:
-            {
-
-            }break;
-
-            case ARRAY_UINT8_T:
-            {
-                
-            }break;
-
-            case ARRAY_CHAR:
-            {
-
-            }break;
-
-            default:
-            {
-
-            }break;
-
-        }
-
-        // for(;;){
-
-        //     #define WIDTH 1280
-        //     #define HEIGHT 720
-
-        //     imagemPlot = cv::Mat(HEIGHT, WIDTH, CV_8UC3, cv::Scalar(54,54,54));
-
-        //     if (data.size() > WIDTH)
-        //         data.erase(data.begin());
-
-        //     float min, max;
-        //     MinMaxElement(data, min, max);
-
-        //     for(int i = 1; i < data.size(); i++)
-        //         if (min == max) cv::line(imagemPlot, cv::Point(i-1, HEIGHT/2.0), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
-        //         else            cv::line(imagemPlot, cv::Point(i-1, Map(data[i-1], min, max, HEIGHT, 0)), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
-
-        //     cv::putText(imagemPlot, std::to_string(data.back()), cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(68,225,242), 1, CV_AA);
-
-        //     cv::imshow(windowName, imagemPlot);
+            // Verifica se o buffer está vazio
+            if(!data.size()){
+                std::cout   << "\nAguardando o(s) parâmetro(s) solicitado(o) pelo usuário.\n"
+                            << "Pressione ctrl+c para sair.\n";
             
-        //     char c = (char) cvWaitKey(1);
-        //     if(c == 27) Quit_Handler(c); // ESC key
-        // }
+                // Fica em loop até o recebimento do parâmetro
+                while(!data.size());
+            }
 
+            // Elimina o primeiro elemento do buffer caso o tamanho do vetor extrapole o da imagem
+            if (data.size() > WIDTH)
+                data.erase(data.begin());
+
+            // Armazena os extremos do buffer
+            float min = *min_element(data.begin(), data.end());
+            float max = *max_element(data.begin(), data.end());
+
+            // Varre o buffer e adiciona os pontos (escalados) na imagem
+            for(register int i = 1; i < data.size(); i++)
+                if (fabs(max-min) < FLT_EPSILON) cv::line(imagemPlot, cv::Point(i-1, HEIGHT/2.0), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
+                else cv::line(imagemPlot, cv::Point(i-1, Map(data[i-1], min, max, HEIGHT, 0)), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
+
+            // Adiciona o último valor em modo texto na imagem
+            cv::putText(imagemPlot, std::to_string(data.back()), cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(68,225,242), 1, CV_AA);
+
+            cv::imshow(windowName, imagemPlot);
+            
+            // Fecha o programa caso a tecla ESC seja pressionada sobre a janela
+            char c = (char) cvWaitKey(1);
+            if(c == 27) Quit_Handler(c); // ESC key
+        }
 
     }
 

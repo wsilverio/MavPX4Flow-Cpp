@@ -75,7 +75,7 @@ get_time_usec()
 //   Con/De structors
 // ------------------------------------------------------------------------------
 PX4Flow_Interface::
-PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, Common_Types *Data_)
+PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_)
 {
 	// initialize attributes
 	write_count = 0;
@@ -99,7 +99,7 @@ PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, Comm
 
 	msgUserID = msgID_;
 	msgUserFieldName = msgFieldName_;
-	Data = Data_;
+	data = data_;
 }
 
 PX4Flow_Interface::
@@ -151,7 +151,7 @@ read_messages()
 					// uint8_t system_status
 					// uint8_t mavlink_version
 
-					printf("MAVLINK_MSG_ID_HEARTBEAT\n");
+					// printf("MAVLINK_MSG_ID_HEARTBEAT\n");
 					mavlink_msg_heartbeat_decode(&message, &(current_messages.heartbeat));
 					current_messages.time_stamps.heartbeat = get_time_usec();
 					this_timestamps.heartbeat = current_messages.time_stamps.heartbeat;
@@ -162,22 +162,31 @@ read_messages()
 
 					switch(msgUserFieldName){
 						case type:
+						{
 							data->push_back((float) current_messages.heartbeat.type);
-							break;
+							// std::cout << "type: " << (float) current_messages.heartbeat.type << "\n";
+						}break;
 						case autopilot:
+						{
 							data->push_back((float) current_messages.heartbeat.autopilot);
-							break;	
+							// std::cout << "autopilot: " << (float) current_messages.heartbeat.autopilot << "\n";
+						}break;	
 						case base_mode:
+						{
 							data->push_back((float) current_messages.heartbeat.base_mode);
-							break;
+							// std::cout << "base_mode: " << (float) current_messages.heartbeat.base_mode << "\n";
+						}break;
 						case custom_mode:
 							data->push_back((float) current_messages.heartbeat.custom_mode);
+							// std::cout << "base_mode: " << (float) current_messages.heartbeat.custom_mode << "\n";
 							break;
 						case system_status:
 							data->push_back((float) current_messages.heartbeat.system_status);
+							// std::cout << "system_status: " << (float) current_messages.heartbeat.system_status << "\n";
 							break;
 						case mavlink_version:
 							data->push_back((float) current_messages.heartbeat.mavlink_version);
+							// std::cout << "link_version: " << (float) current_messages.heartbeat.mavlink_version << "\n";
 							break;
 						default:
 							// ########## SAIR DO PGM? ##########
@@ -209,24 +218,31 @@ read_messages()
 					switch(msgUserFieldName){
 						case type:
 							data->push_back((float) current_messages.data_transmission_handshake.type);
+							// std::cout << "type: " << (float) current_messages.data_transmission_handshake.type << "\n";
 							break;
 						case size:
 							data->push_back((float) current_messages.data_transmission_handshake.size);
+							// std::cout << "size: " << (float) current_messages.data_transmission_handshake.size << "\n";
 							break;
 						case width:
 							data->push_back((float) current_messages.data_transmission_handshake.width);
+							// std::cout << "width: " << (float) current_messages.data_transmission_handshake.width << "\n";
 							break;
 						case height:
 							data->push_back((float) current_messages.data_transmission_handshake.height);
+							// std::cout << "height: " << (float) current_messages.data_transmission_handshake.height << "\n";
 							break;
 						case packets:
 							data->push_back((float) current_messages.data_transmission_handshake.packets);
+							// std::cout << "packets: " << (float) current_messages.data_transmission_handshake.packets << "\n";
 							break;
 						case payload:
 							data->push_back((float) current_messages.data_transmission_handshake.payload);
+							// std::cout << "payload: " << (float) current_messages.data_transmission_handshake.payload << "\n";
 							break;
 						case jpg_quality:
 							data->push_back((float) current_messages.data_transmission_handshake.jpg_quality);
+							// std::cout << "jpg_quality: " << (float) current_messages.data_transmission_handshake.jpg_quality << "\n";
 							break;
 						default:
 							break;
@@ -251,26 +267,16 @@ read_messages()
 
 					switch(msgUserFieldName){
 						case seqnr:
-								// error: base operand of ‘->’ is not a pointer
-								// data->push_back((float) current_messages.encapsulated_data.seqnr); 
+							// ########## error: base operand of ‘->’ is not a pointer ##########
+							// data->push_back((float) current_messages.encapsulated_data.seqnr);
+							std::cout << "seqnr: " << current_messages.encapsulated_data.seqnr << "\n";
 							break;
-						
 						case data:
-						{
-							// implementar
-							printf("\n----------------------------------------------\n%d: ", current_messages.encapsulated_data.seqnr);
-
-							uint8_t *img = current_messages.encapsulated_data.data;
-
-							for (int i = 0; i < 253; ++i){
-								printf("%d ", *img);
-								img++;
-							}
-						}break;
-
+							// memcpy() // ########## uint8_t[253] ##########
+							std::cout << "data: " << std::hex << current_messages.encapsulated_data.data << "\n";
+							break;
 						default:
 							break;
-
 					}
 
 					break;
@@ -299,28 +305,36 @@ read_messages()
 
 					switch(msgUserFieldName){
 						case time_usec:
-							data->push_back((float) current_messages.optical_flow.time_usec);
+							// data->push_back((double) current_messages.optical_flow.time_usec);
+							// std::cout << "time_usec:" << (float) current_messages.optical_flow.time_usec << "\n";
 							break;
 						case sensor_id:
 							data->push_back((float) current_messages.optical_flow.sensor_id);
+							// std::cout << "sensor_id: " << (float) current_messages.optical_flow.sensor_id << "\n";
 							break;
 						case flow_x:
 							data->push_back((float) current_messages.optical_flow.flow_x);
+							// std::cout << "flow_x: " << (float) current_messages.optical_flow.flow_x << "\n";
 							break;
 						case flow_y:
 							data->push_back((float) current_messages.optical_flow.flow_y);
+							// std::cout << "flow_y: " << (float) current_messages.optical_flow.flow_y << "\n";
 							break;
 						case flow_comp_m_x:
 							data->push_back((float) current_messages.optical_flow.flow_comp_m_x);
+							// std::cout << "flow_comp_m_x: " << (float) current_messages.optical_flow.flow_comp_m_x << "\n";
 							break;
 						case flow_comp_m_y:
 							data->push_back((float) current_messages.optical_flow.flow_comp_m_y);
+							// std::cout << "flow_comp_m_y: " << (float) current_messages.optical_flow.flow_comp_m_y << "\n";
 							break;
 						case quality:
 							data->push_back((float) current_messages.optical_flow.quality);
+							// std::cout << "quality: " << (float) current_messages.optical_flow.quality << "\n";
 							break;
 						case ground_distance:
 							data->push_back((float) current_messages.optical_flow.ground_distance);
+							// std::cout << "ground_distance: " << (float) current_messages.optical_flow.ground_distance << "\n";
 							break;
 						default:
 							break;
@@ -356,40 +370,52 @@ read_messages()
 
 					switch(msgUserFieldName){
 						case time_usec:
-							data->push_back((float) current_messages.optical_flow_rad.time_usec);
+							// data->push_back((double) current_messages.optical_flow_rad.time_usec);
+							// std::cout << "time_usec: " << current_messages.optical_flow_rad.time_usec << "\n";
 							break;
 						case sensor_id:
 							data->push_back((float) current_messages.optical_flow_rad.sensor_id);
+							// std::cout << "sensor_id: " << (float) current_messages.optical_flow_rad.sensor_id << "\n";
 							break;
 						case integration_time_us:
 							data->push_back((float) current_messages.optical_flow_rad.integration_time_us);
+							// std::cout << "integration_time_us: " << (float) current_messages.optical_flow_rad.integration_time_us << "\n";
 							break;
 						case integrated_x:
 							data->push_back((float) current_messages.optical_flow_rad.integrated_x);
+							// std::cout << "integrated_x: " << (float) current_messages.optical_flow_rad.integrated_x << "\n";
 							break;
 						case integrated_y:
 							data->push_back((float) current_messages.optical_flow_rad.integrated_y);
+							// std::cout << "integrated_y: " << (float) current_messages.optical_flow_rad.integrated_y << "\n";
 							break;
 						case integrated_xgyro:
 							data->push_back((float) current_messages.optical_flow_rad.integrated_xgyro);
+							// std::cout << "integrated_xgyro: " << (float) current_messages.optical_flow_rad.integrated_xgyro << "\n";
 							break;
 						case integrated_ygyro:
 							data->push_back((float) current_messages.optical_flow_rad.integrated_ygyro);
+							// std::cout << "integrated_ygyro: " << (float) current_messages.optical_flow_rad.integrated_ygyro << "\n";
 							break;
 						case integrated_zgyro:
 							data->push_back((float) current_messages.optical_flow_rad.integrated_zgyro);
+							// std::cout << "integrated_zgyro: " << (float) current_messages.optical_flow_rad.integrated_zgyro << "\n";
 							break;
 						case temperature:
 							data->push_back((float) current_messages.optical_flow_rad.temperature);
+							// std::cout << "temperature: " << (float) current_messages.optical_flow_rad.temperature << "\n";
 							break;
 						case quality:
 							data->push_back((float) current_messages.optical_flow_rad.quality);
+							// std::cout << "quality: " << (float) current_messages.optical_flow_rad.quality << "\n";
 							break;
 						case time_delta_distance_us:
 							data->push_back((float) current_messages.optical_flow_rad.time_delta_distance_us);
+							// std::cout << "time_delta_distance_us: " << (float) current_messages.optical_flow_rad.time_delta_distance_us << "\n";
 							break;
 						case distance:
 							data->push_back((float) current_messages.optical_flow_rad.distance);
+							// std::cout << "distance: " << (float) current_messages.optical_flow_rad.distance << "\n";
 							break;
 						default:
 							break;
@@ -417,19 +443,23 @@ read_messages()
 
 					switch(msgUserFieldName){
 						case name:
-							// data->push_back((float) current_messages.debug_vect.name); // ########## CHAR ##########
+							std::cout << "name: " << current_messages.debug_vect.name << "\n"; // ########## CHAR ##########
 							break;
 						case time_usec:
-							data->push_back((float) current_messages.debug_vect.time_usec);
+							// data->push_back((double) current_messages.debug_vect.time_usec);
+							// std::cout << "time_usec: " << current_messages.debug_vect.time_usec << "\n";
 							break;
 						case x:
 							data->push_back((float) current_messages.debug_vect.x);
+							// std::cout << "x: " << (float) current_messages.debug_vect.x << "\n";
 							break;
 						case y:
 							data->push_back((float) current_messages.debug_vect.y);
+							// std::cout << "y: " << (float) current_messages.debug_vect.y << "\n";
 							break;
 						case z:
 							data->push_back((float) current_messages.debug_vect.z);
+							// std::cout << "z: " << (float) current_messages.debug_vect.z << "\n";
 							break;
 						default:
 							break;
@@ -456,12 +486,14 @@ read_messages()
 					switch(msgUserFieldName){
 						case time_boot_ms:
 							data->push_back((float) current_messages.named_value_float.time_boot_ms);
+							// std::cout << "time_boot_ms: " << (float) current_messages.named_value_float.time_boot_ms << "\n";
 							break;
 						case name:
-							// data->push_back((float) current_messages.named_value_float.name); // ########## CHAR ##########
+							std::cout << "name: " << current_messages.named_value_float.name << "\n"; // ########## CHAR ##########
 							break;
 						case value:
 							data->push_back((float) current_messages.named_value_float.value);
+							// std::cout << "value: " << (float) current_messages.named_value_float.value << "\n";
 							break;
 						default:
 							break;
@@ -488,12 +520,14 @@ read_messages()
 					switch(msgUserFieldName){
 						case time_boot_ms:
 							data->push_back((float) current_messages.named_value_int.time_boot_ms);
+							// std::cout << "time_boot_ms:" << (float) current_messages.named_value_int.time_boot_ms << "\n";
 							break;
 						case name:
-							// data->push_back((float) current_messages.named_value_int.name); // ########## CHAR ##########
+							std::cout << "name:" << current_messages.named_value_int.name << "\n"; // ########## CHAR ##########
 							break;
 						case value:
 							data->push_back((float) current_messages.named_value_int.value);
+							// std::cout << "value:" << (float) current_messages.named_value_int.value << "\n";
 							break;
 						default:
 							break;
@@ -680,7 +714,7 @@ start()
 	{
 		if ( time_to_exit )
 			return;
-		usleep(500000); // check at 2Hz
+		// usleep(500000); // check at 2Hz
 	}
 
 	printf("Found\n");
