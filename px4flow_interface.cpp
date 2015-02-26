@@ -75,7 +75,7 @@ get_time_usec()
 //   Con/De structors
 // ------------------------------------------------------------------------------
 PX4Flow_Interface::
-PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_)
+PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_, cv::Mat *img_)
 {
 	// initialize attributes
 	write_count = 0;
@@ -99,7 +99,10 @@ PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std:
 
 	msgUserID = msgID_;
 	msgUserFieldName = msgFieldName_;
+	
 	data = data_;
+	img = img_;
+	packet = 0;
 }
 
 PX4Flow_Interface::
@@ -136,7 +139,10 @@ read_messages()
 			current_messages.sysid  = message.sysid;
 			current_messages.compid = message.compid;
 
-			if(message.msgid != msgUserID) return;
+			if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA and message.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE){
+				// pass
+			}else if(message.msgid != msgUserID)
+				return;
 
 			// Handle Message ID
 			switch (message.msgid)
@@ -211,39 +217,42 @@ read_messages()
 					current_messages.time_stamps.data_transmission_handshake = get_time_usec();
 					this_timestamps.data_transmission_handshake = current_messages.time_stamps.data_transmission_handshake;
 
+					if()
+
+					std::cout << "type: " << (float) current_messages.data_transmission_handshake.type << "\n";
+					std::cout << "size: " << (float) current_messages.data_transmission_handshake.size << "\n";
+					std::cout << "width: " << (float) current_messages.data_transmission_handshake.width << "\n";
+					std::cout << "height: " << (float) current_messages.data_transmission_handshake.height << "\n";
+					std::cout << "packets: " << (float) current_messages.data_transmission_handshake.packets << "\n";
+					std::cout << "payload: " << (float) current_messages.data_transmission_handshake.payload << "\n";
+					std::cout << "jpg_quality: " << (float) current_messages.data_transmission_handshake.jpg_quality << "\n";
+
 					enum Fields{
 						type, size, width, height, packets, payload, jpg_quality
 					};
 
 					switch(msgUserFieldName){
-						case type:
+						case type:{
 							data->push_back((float) current_messages.data_transmission_handshake.type);
-							// std::cout << "type: " << (float) current_messages.data_transmission_handshake.type << "\n";
-							break;
-						case size:
+						}break;
+						case size:{
 							data->push_back((float) current_messages.data_transmission_handshake.size);
-							// std::cout << "size: " << (float) current_messages.data_transmission_handshake.size << "\n";
-							break;
-						case width:
+						}break;
+						case width:{
 							data->push_back((float) current_messages.data_transmission_handshake.width);
-							// std::cout << "width: " << (float) current_messages.data_transmission_handshake.width << "\n";
-							break;
-						case height:
+						}break;
+						case height:{
 							data->push_back((float) current_messages.data_transmission_handshake.height);
-							// std::cout << "height: " << (float) current_messages.data_transmission_handshake.height << "\n";
-							break;
-						case packets:
+						}break;
+						case packets:{
 							data->push_back((float) current_messages.data_transmission_handshake.packets);
-							// std::cout << "packets: " << (float) current_messages.data_transmission_handshake.packets << "\n";
-							break;
-						case payload:
+						}break;
+						case payload:{
 							data->push_back((float) current_messages.data_transmission_handshake.payload);
-							// std::cout << "payload: " << (float) current_messages.data_transmission_handshake.payload << "\n";
-							break;
-						case jpg_quality:
+						}break;
+						case jpg_quality:{
 							data->push_back((float) current_messages.data_transmission_handshake.jpg_quality);
-							// std::cout << "jpg_quality: " << (float) current_messages.data_transmission_handshake.jpg_quality << "\n";
-							break;
+						}break;
 						default:
 							break;
 					}
@@ -261,22 +270,38 @@ read_messages()
 					current_messages.time_stamps.encapsulated_data = get_time_usec();
 					this_timestamps.encapsulated_data = current_messages.time_stamps.encapsulated_data;
 
-					enum Fields{
-						seqnr, data
-					};
+					if (current_messages.encapsulated_data.seqnr == packet){
+					 	for (uint8_t *p = current_messages.encapsulated_data.data; *p; p++)
+							imgVector.push_back(*p);
 
-					switch(msgUserFieldName){
-						case seqnr:
-							// ########## error: base operand of ‘->’ is not a pointer ##########
-							// data->push_back((float) current_messages.encapsulated_data.seqnr);
-							std::cout << "seqnr: " << current_messages.encapsulated_data.seqnr << "\n";
-							break;
-						case data:
-							// memcpy() // ########## uint8_t[253] ##########
-							std::cout << "data: " << std::hex << current_messages.encapsulated_data.data << "\n";
-							break;
-						default:
-							break;
+						packet++;
+					}
+					else{
+						packet = 0;
+						imgVector.clear();
+					} 
+					
+					if(packet == (current_messages.data_transmission_handshake.packets - 1) && (imgVector.size() >= current_messages.data_transmission_handshake.size)){
+						std::cout 	<< "\nGerando imagem\n"
+									<< "packet: " << packet << "\n"
+									<< "packets: " << current_messages.data_transmission_handshake.packets - 1 << "\n"
+									<< "vector.size: " << imgVector.size() << "\n"
+									<< "img.height: " << current_messages.data_transmission_handshake.height << "\n"
+									<< "img.width: " << current_messages.data_transmission_handshake.width << "\n\n";
+
+						*img = cv::Mat(current_messages.data_transmission_handshake.height,
+									current_messages.data_transmission_handshake.width,
+									CV_8UC1);//,
+									// cv::Scalar(255));
+
+						for (register unsigned int x = 0; x < current_messages.data_transmission_handshake.width; x++){
+							for (register unsigned int y = 0; y < current_messages.data_transmission_handshake.height; y++){
+								img->at<uchar>(y, x) = imgVector[x + y*(current_messages.data_transmission_handshake.width)];
+							}
+						}
+
+						packet = 0;
+						imgVector.clear();
 					}
 
 					break;

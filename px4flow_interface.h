@@ -66,6 +66,10 @@
  #include <iostream>
  #include <vector>
 
+ #include <opencv2/opencv.hpp>
+
+ #include <algorithm> // copy
+
 // ------------------------------------------------------------------------------
 //   Prototypes
 // ------------------------------------------------------------------------------
@@ -183,7 +187,7 @@ class PX4Flow_Interface
 public:
 
 	PX4Flow_Interface();
-	PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_);
+	PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_, cv::Mat *img_);
 	~PX4Flow_Interface();
 
 	char reading_status;
@@ -194,10 +198,16 @@ public:
     int system_id;
 	int px4flow_id;
 	int companion_id;
+
 	int msgUserID;
 	int msgUserFieldName;
 
+	std::vector<uint8_t> imgVector;
+
 	std::vector<float> *data;
+
+	uint16_t packet;
+	cv::Mat *img;
 
 	Mavlink_Messages current_messages;
 

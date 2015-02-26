@@ -225,26 +225,27 @@ int main(int argc, char **argv){
                 msgID = MAVLINK_MSG_ID_ENCAPSULATED_DATA;
                 windowName = "ENCAPSULATED_DATA: ";
 
-                #define TAM 2
-                const char *fields[TAM] = {"seqnr", "data"};
+                // #define TAM 2
+                // const char *fields[TAM] = {"seqnr", "data"};
                 
-                printf("\nEscolha o Field Name da mensagem:\n\n");
+                // printf("\nEscolha o Field Name da mensagem:\n\n");
 
-                for (int i = 0; i < TAM; ++i){
-                    printf("{%d} %s\n", i, fields[i]);
-                }
+                // for (int i = 0; i < TAM; ++i){
+                //     printf("{%d} %s\n", i, fields[i]);
+                // }
 
-                printf("Field Name: ");
+                // printf("Field Name: ");
 
-                msgFieldName = -1;
-                scanf("%d", &msgFieldName);
+                // msgFieldName = -1;
+                // scanf("%d", &msgFieldName);
 
-                if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
-                    throw EXIT_FAILURE;
-                }
+                // if (msgFieldName < 0 || msgFieldName >= TAM){
+                //     printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
+                //     throw EXIT_FAILURE;
+                // }
 
-                windowName += fields[msgFieldName];
+                // windowName += fields[msgFieldName];
+                windowName += "image";
 
             }
             break;
@@ -406,13 +407,19 @@ int main(int argc, char **argv){
         // Vetor que contém o histórico de dados
         std::vector<float> data;
 
+        // Buffer da imagem a ser plotada
+        cv::Mat imagemPlot;
+        // Janela que conterá a imagem
+        cv::namedWindow(windowName, CV_WINDOW_AUTOSIZE);
+
         // Gerenciador serial
         Serial_Port serial_port(uart_name, baudrate);
         // Controlador de saída. Ver função Quit_Handler()
         serial_port_quit = &serial_port;
 
-        // Gerenciador Mavlink
-        PX4Flow_Interface px4flow(&serial_port, msgID, msgFieldName, &data);
+        // Gerenciador Mavlink -> Imagem// Gerenciador Mavlink -> Datos
+        PX4Flow_Interface px4flow(&serial_port, msgID, msgFieldName, &data, &imagemPlot);
+        
         // Controlador de saída. Ver função Quit_Handler()
         px4flow_interface_quit = &px4flow;
 
@@ -424,44 +431,44 @@ int main(int argc, char **argv){
         // Inicializa a comunicação Mavlink (thread)
         px4flow.start();
 
-        // Buffer da imagem a ser plotada
-        cv::Mat imagemPlot;
-        // Janela que conterá a imagem
-        cv::namedWindow(windowName, CV_WINDOW_AUTOSIZE);
-
         for(;;){
 
-            // Parâmetros da imagem
-            #define WIDTH 1280
-            #define HEIGHT 720
-
-            // Imagem vazia, com background
-            imagemPlot = cv::Mat(HEIGHT, WIDTH, CV_8UC3, cv::Scalar(54,54,54));
-
-            // Verifica se o buffer está vazio
-            if(!data.size()){
-                std::cout   << "\nAguardando o(s) parâmetro(s) solicitado(o) pelo usuário.\n"
-                            << "Pressione ctrl+c para sair.\n";
+            if (msgID != MAVLINK_MSG_ID_ENCAPSULATED_DATA){                
             
-                // Fica em loop até o recebimento do parâmetro
-                while(!data.size());
+                // Parâmetros da imagem
+                #define WIDTH 1280
+                #define HEIGHT 720
+    
+                // Imagem vazia, com background
+                imagemPlot = cv::Mat(HEIGHT, WIDTH, CV_8UC3, cv::Scalar(54,54,54));
+    
+                // Verifica se o buffer está vazio
+                if(!data.size()){
+                    std::cout   << "\nAguardando o(s) parâmetro(s) solicitado(o) pelo usuário.\n"
+                                << "Pressione ctrl+c para sair.\n";
+                
+                    // Fica em loop até o recebimento do parâmetro
+                    while(!data.size());
+                }
+    
+                // Elimina o primeiro elemento do buffer caso o tamanho do vetor extrapole o da imagem
+                if (data.size() > WIDTH)
+                    data.erase(data.begin());
+    
+                // Armazena os extremos do buffer
+                float min = *min_element(data.begin(), data.end());
+                float max = *max_element(data.begin(), data.end());
+    
+                // Varre o buffer e adiciona os pontos (escalados) na imagem
+                for(register int i = 1; i < WIDTH; i++)
+                    if (fabs(max-min) < FLT_EPSILON) cv::line(imagemPlot, cv::Point(i-1, HEIGHT/2.0), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
+                    else cv::line(imagemPlot, cv::Point(i-1, Map(data[i-1], min, max, HEIGHT, 0)), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
+    
+                // Adiciona o último valor em modo texto na imagem
+                cv::putText(imagemPlot, std::to_string(data.back()), cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(68,225,242), 1, CV_AA);
             }
 
-            // Elimina o primeiro elemento do buffer caso o tamanho do vetor extrapole o da imagem
-            if (data.size() > WIDTH)
-                data.erase(data.begin());
-
-            // Armazena os extremos do buffer
-            float min = *min_element(data.begin(), data.end());
-            float max = *max_element(data.begin(), data.end());
-
-            // Varre o buffer e adiciona os pontos (escalados) na imagem
-            for(register int i = 1; i < data.size(); i++)
-                if (fabs(max-min) < FLT_EPSILON) cv::line(imagemPlot, cv::Point(i-1, HEIGHT/2.0), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
-                else cv::line(imagemPlot, cv::Point(i-1, Map(data[i-1], min, max, HEIGHT, 0)), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
-
-            // Adiciona o último valor em modo texto na imagem
-            cv::putText(imagemPlot, std::to_string(data.back()), cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(68,225,242), 1, CV_AA);
+            while(not imagemPlot.rows && not imagemPlot.cols);
 
             cv::imshow(windowName, imagemPlot);
             
