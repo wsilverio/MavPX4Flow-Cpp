@@ -16,7 +16,8 @@
 #include <algorithm>    // std::min_element, std::max_element
 #include <math.h>       // fabs
 
-#include <opencv2/opencv.hpp> // rotinas OpenCV
+#include <opencv2/opencv.hpp>   // OpenCV
+#include <X11/Xlib.h>           // DefaultScreenOfDisplay
 
 // Global
 Serial_Port *serial_port_quit; // função quit_handler()
@@ -406,11 +407,23 @@ int main(int argc, char **argv){
 
         // Vetor que contém o histórico de dados
         std::vector<float> data;
-
         // Buffer da imagem a ser plotada
         cv::Mat imagemPlot;
+        
+        // Parâmetros da imagem
+        #define WIDTH 1280
+        #define HEIGHT 720
+        
+        // Parâmetros do monitor do usuário
+        Display *display = XOpenDisplay(NULL);
+        Screen  *screen = DefaultScreenOfDisplay(display);
+        const int screenWidth  = screen->width;
+        const int screenHeight = screen->height;
+
         // Janela que conterá a imagem
         cv::namedWindow(windowName, CV_WINDOW_AUTOSIZE);
+        // Move a janela para o centro da tela
+        cv::moveWindow(windowName, (screenWidth-WIDTH)/2, (screenHeight-HEIGHT)/2);
 
         // Gerenciador serial
         Serial_Port serial_port(uart_name, baudrate);
@@ -419,7 +432,6 @@ int main(int argc, char **argv){
 
         // Gerenciador Mavlink -> Imagem// Gerenciador Mavlink -> Datos
         PX4Flow_Interface px4flow(&serial_port, msgID, msgFieldName, &data, &imagemPlot);
-        
         // Controlador de saída. Ver função Quit_Handler()
         px4flow_interface_quit = &px4flow;
 
@@ -431,45 +443,49 @@ int main(int argc, char **argv){
         // Inicializa a comunicação Mavlink (thread)
         px4flow.start();
 
+        // Main Loop
         for(;;){
 
+            // Caso o usuário selecione para receber a imagem da sensor
+            // o próprio gerenciador Mavlink a insere em imagemPlot
             if (msgID != MAVLINK_MSG_ID_ENCAPSULATED_DATA){                
-            
-                // Parâmetros da imagem
-                #define WIDTH 1280
-                #define HEIGHT 720
     
                 // Imagem vazia, com background
                 imagemPlot = cv::Mat(HEIGHT, WIDTH, CV_8UC3, cv::Scalar(54,54,54));
     
                 // Verifica se o buffer está vazio
-                if(!data.size()){
+                if(data.size() < 2){ // 2 porque o programa acessa data[i-1]
                     std::cout   << "\nAguardando o(s) parâmetro(s) solicitado(o) pelo usuário.\n"
                                 << "Pressione ctrl+c para sair.\n";
                 
-                    // Fica em loop até o recebimento do parâmetro
-                    while(!data.size());
+                    // Fica em loop até o recebimento dos parâmetros (min 2)
+                    while(data.size() < 2);
                 }
     
-                // Elimina o primeiro elemento do buffer caso o tamanho do vetor extrapole o da imagem
+                // Últimos WIDTH elementos do buffer
                 if (data.size() > WIDTH)
-                    data.erase(data.begin());
+                    data.erase(data.begin(), data.end() - WIDTH);
+                    // data.erase(data.begin());
     
                 // Armazena os extremos do buffer
                 float min = *min_element(data.begin(), data.end());
                 float max = *max_element(data.begin(), data.end());
     
+                #define MARGEM 5
                 // Varre o buffer e adiciona os pontos (escalados) na imagem
-                for(register int i = 1; i < WIDTH; i++)
-                    if (fabs(max-min) < FLT_EPSILON) cv::line(imagemPlot, cv::Point(i-1, HEIGHT/2.0), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
-                    else cv::line(imagemPlot, cv::Point(i-1, Map(data[i-1], min, max, HEIGHT, 0)), cv::Point(i, HEIGHT/2.0 + 31*data[i]), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
-    
+                for(register int i = 1; i < MIN(data.size(), WIDTH); i++){
+                    if (fabs(max-min) < FLT_EPSILON) cv::line(imagemPlot, cv::Point(i-1, HEIGHT/2.0), cv::Point(i, HEIGHT/2.0), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
+                    else cv::line(imagemPlot, cv::Point(i-1, Map(data[i-1], min, max, HEIGHT, 0)), cv::Point(i, Map(data[i], min, max, HEIGHT-MARGEM, MARGEM)), cv::Scalar(191,172,35), 1.5, CV_AA, 0);
+                }
+
                 // Adiciona o último valor em modo texto na imagem
                 cv::putText(imagemPlot, std::to_string(data.back()), cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(68,225,242), 1, CV_AA);
             }
 
+            // Imagem válida?
             while(not imagemPlot.rows && not imagemPlot.cols);
 
+            // Exibe a imagem
             cv::imshow(windowName, imagemPlot);
             
             // Fecha o programa caso a tecla ESC seja pressionada sobre a janela

@@ -217,44 +217,44 @@ read_messages()
 					current_messages.time_stamps.data_transmission_handshake = get_time_usec();
 					this_timestamps.data_transmission_handshake = current_messages.time_stamps.data_transmission_handshake;
 
-					if()
-
-					std::cout << "type: " << (float) current_messages.data_transmission_handshake.type << "\n";
-					std::cout << "size: " << (float) current_messages.data_transmission_handshake.size << "\n";
-					std::cout << "width: " << (float) current_messages.data_transmission_handshake.width << "\n";
-					std::cout << "height: " << (float) current_messages.data_transmission_handshake.height << "\n";
-					std::cout << "packets: " << (float) current_messages.data_transmission_handshake.packets << "\n";
-					std::cout << "payload: " << (float) current_messages.data_transmission_handshake.payload << "\n";
-					std::cout << "jpg_quality: " << (float) current_messages.data_transmission_handshake.jpg_quality << "\n";
-
-					enum Fields{
-						type, size, width, height, packets, payload, jpg_quality
-					};
-
-					switch(msgUserFieldName){
-						case type:{
-							data->push_back((float) current_messages.data_transmission_handshake.type);
-						}break;
-						case size:{
-							data->push_back((float) current_messages.data_transmission_handshake.size);
-						}break;
-						case width:{
-							data->push_back((float) current_messages.data_transmission_handshake.width);
-						}break;
-						case height:{
-							data->push_back((float) current_messages.data_transmission_handshake.height);
-						}break;
-						case packets:{
-							data->push_back((float) current_messages.data_transmission_handshake.packets);
-						}break;
-						case payload:{
-							data->push_back((float) current_messages.data_transmission_handshake.payload);
-						}break;
-						case jpg_quality:{
-							data->push_back((float) current_messages.data_transmission_handshake.jpg_quality);
-						}break;
-						default:
-							break;
+					if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA){
+						std::cout << "type: " << (float) current_messages.data_transmission_handshake.type << "\n";
+						std::cout << "size: " << (float) current_messages.data_transmission_handshake.size << "\n";
+						std::cout << "width: " << (float) current_messages.data_transmission_handshake.width << "\n";
+						std::cout << "height: " << (float) current_messages.data_transmission_handshake.height << "\n";
+						std::cout << "packets: " << (float) current_messages.data_transmission_handshake.packets << "\n";
+						std::cout << "payload: " << (float) current_messages.data_transmission_handshake.payload << "\n";
+						std::cout << "jpg_quality: " << (float) current_messages.data_transmission_handshake.jpg_quality << "\n\n";
+					}else{
+						enum Fields{
+							type, size, width, height, packets, payload, jpg_quality
+						};
+															
+						switch(msgUserFieldName){
+							case type:{
+								data->push_back((float) current_messages.data_transmission_handshake.type);
+							}break;
+							case size:{
+								data->push_back((float) current_messages.data_transmission_handshake.size);
+							}break;
+							case width:{
+								data->push_back((float) current_messages.data_transmission_handshake.width);
+							}break;
+							case height:{
+								data->push_back((float) current_messages.data_transmission_handshake.height);
+							}break;
+							case packets:{
+								data->push_back((float) current_messages.data_transmission_handshake.packets);
+							}break;
+							case payload:{
+								data->push_back((float) current_messages.data_transmission_handshake.payload);
+							}break;
+							case jpg_quality:{
+								data->push_back((float) current_messages.data_transmission_handshake.jpg_quality);
+							}break;
+							default:
+								break;
+						}
 					}
 
 					break;
@@ -262,6 +262,8 @@ read_messages()
 
 				case MAVLINK_MSG_ID_ENCAPSULATED_DATA: // #131
 				{
+					
+					break;
 					// uint16_t seqnr
 					// uint8_t data[253]
 
@@ -273,30 +275,28 @@ read_messages()
 					if (current_messages.encapsulated_data.seqnr == packet){
 					 	for (uint8_t *p = current_messages.encapsulated_data.data; *p; p++)
 							imgVector.push_back(*p);
-
 						packet++;
-					}
-					else{
+					}else{
 						packet = 0;
 						imgVector.clear();
 					} 
 					
 					if(packet == (current_messages.data_transmission_handshake.packets - 1) && (imgVector.size() >= current_messages.data_transmission_handshake.size)){
-						std::cout 	<< "\nGerando imagem\n"
-									<< "packet: " << packet << "\n"
-									<< "packets: " << current_messages.data_transmission_handshake.packets - 1 << "\n"
-									<< "vector.size: " << imgVector.size() << "\n"
-									<< "img.height: " << current_messages.data_transmission_handshake.height << "\n"
-									<< "img.width: " << current_messages.data_transmission_handshake.width << "\n\n";
+						// std::cout 	<< "\nGerando imagem\n"
+						// 			<< "packet: " << packet << "\n"
+						// 			<< "packets: " << current_messages.data_transmission_handshake.packets << "\n"
+						// 			<< "vector.size: " << imgVector.size() << "\n"
+						// 			<< "img.height: " << current_messages.data_transmission_handshake.height << "\n"
+						// 			<< "img.width: " << current_messages.data_transmission_handshake.width << "\n\n";
 
-						*img = cv::Mat(current_messages.data_transmission_handshake.height,
-									current_messages.data_transmission_handshake.width,
-									CV_8UC1);//,
-									// cv::Scalar(255));
+						*img = cv::Mat(
+								current_messages.data_transmission_handshake.height,
+								current_messages.data_transmission_handshake.width,
+								CV_8UC1);
 
-						for (register unsigned int x = 0; x < current_messages.data_transmission_handshake.width; x++){
-							for (register unsigned int y = 0; y < current_messages.data_transmission_handshake.height; y++){
-								img->at<uchar>(y, x) = imgVector[x + y*(current_messages.data_transmission_handshake.width)];
+						for (register unsigned int x = 0; x < img->cols; x++){
+							for (register unsigned int y = 0; y < img->rows; y++){
+								img->at<uchar>(y,x) = imgVector[x + y*img->cols];
 							}
 						}
 
