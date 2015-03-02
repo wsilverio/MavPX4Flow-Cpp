@@ -87,32 +87,32 @@ void* start_px4flow_interface_write_thread(void *args);
 
 struct Time_Stamps
 {
-	Time_Stamps()
-	{
-		reset_timestamps();
-	}
+    Time_Stamps()
+    {
+        reset_timestamps();
+    }
 
-	uint64_t heartbeat;
-	uint64_t data_transmission_handshake;
-	uint64_t encapsulated_data;
-	uint64_t optical_flow;
-	uint64_t optical_flow_rad;
-	uint64_t debug_vect;
-	uint64_t named_value_float;
-	uint64_t named_value_int;
+    uint64_t heartbeat;
+    uint64_t data_transmission_handshake;
+    uint64_t encapsulated_data;
+    uint64_t optical_flow;
+    uint64_t optical_flow_rad;
+    uint64_t debug_vect;
+    uint64_t named_value_float;
+    uint64_t named_value_int;
 
-	void
-	reset_timestamps()
-	{
-		heartbeat = 0;
-		data_transmission_handshake = 0;
-		encapsulated_data = 0;
-		optical_flow = 0;
-		optical_flow_rad = 0;
-		debug_vect = 0;
-		named_value_float = 0;
-		named_value_int = 0;
-	}
+    void
+    reset_timestamps()
+    {
+        heartbeat = 0;
+        data_transmission_handshake = 0;
+        encapsulated_data = 0;
+        optical_flow = 0;
+        optical_flow_rad = 0;
+        debug_vect = 0;
+        named_value_float = 0;
+        named_value_int = 0;
+    }
 
 };
 
@@ -121,43 +121,43 @@ struct Time_Stamps
 
 struct Mavlink_Messages {
 
-	int sysid;
-	int compid;
+    int sysid;
+    int compid;
 
-	// Heartbeat
-	mavlink_heartbeat_t heartbeat;
+    // Heartbeat
+    mavlink_heartbeat_t heartbeat;
 
-	// Data Transmission Handshake
-	mavlink_data_transmission_handshake_t data_transmission_handshake;
+    // Data Transmission Handshake
+    mavlink_data_transmission_handshake_t data_transmission_handshake;
 
-	// Encapsulated Data
-	mavlink_encapsulated_data_t encapsulated_data;
+    // Encapsulated Data
+    mavlink_encapsulated_data_t encapsulated_data;
 
-	// Optical Flow
-	mavlink_optical_flow_t optical_flow;
+    // Optical Flow
+    mavlink_optical_flow_t optical_flow;
 
-	// Optical Flow Rad
-	mavlink_optical_flow_rad_t optical_flow_rad;
+    // Optical Flow Rad
+    mavlink_optical_flow_rad_t optical_flow_rad;
 
-	// Debug Vect
-	mavlink_debug_vect_t debug_vect;
+    // Debug Vect
+    mavlink_debug_vect_t debug_vect;
 
-	// Named Value Float
-	mavlink_named_value_float_t named_value_float;
+    // Named Value Float
+    mavlink_named_value_float_t named_value_float;
 
-	// Named Value Int
-	mavlink_named_value_int_t named_value_int;
+    // Named Value Int
+    mavlink_named_value_int_t named_value_int;
 
-	// System Parameters?
+    // System Parameters?
 
-	// Time Stamps
-	Time_Stamps time_stamps;
+    // Time Stamps
+    Time_Stamps time_stamps;
 
-	void
-	reset_timestamps()
-	{
-		time_stamps.reset_timestamps();
-	}
+    void
+    reset_timestamps()
+    {
+        time_stamps.reset_timestamps();
+    }
 
 };
 
@@ -185,59 +185,59 @@ class PX4Flow_Interface
 
 public:
 
-	PX4Flow_Interface();
-	PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_, cv::Mat *img_);
-	~PX4Flow_Interface();
+    PX4Flow_Interface();
+    PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_, cv::Mat *img_);
+    ~PX4Flow_Interface();
 
-	char reading_status;
-	char writing_status;
-	char control_status;
+    char reading_status;
+    char writing_status;
+    char control_status;
     uint64_t write_count;
 
     int system_id;
-	int px4flow_id;
-	int companion_id;
+    int px4flow_id;
+    int companion_id;
 
-	int msgUserID;
-	int msgUserFieldName;
+    int msgUserID;
+    int msgUserFieldName;
 
-	std::vector<uint8_t> imgVector;
+    std::vector<uint8_t> imgVector;
 
-	std::vector<float> *data;
+    std::vector<float> *data;
 
-	uint16_t packet;
-	cv::Mat *img;
+    uint16_t packet;
+    cv::Mat *img;
 
-	Mavlink_Messages current_messages;
+    Mavlink_Messages current_messages;
 
-	void read_messages();
-	int  write_message(mavlink_message_t message);
+    void read_messages();
+    int  write_message(mavlink_message_t message);
 
-	void enable_offboard_control();
-	void disable_offboard_control();
+    void enable_offboard_control();
+    void disable_offboard_control();
 
-	void start();
-	void stop();
+    void start();
+    void stop();
 
-	void start_read_thread();
-	void start_write_thread(void);
+    void start_read_thread();
+    void start_write_thread(void);
 
-	void handle_quit( int sig );
+    void handle_quit( int sig );
 
 
 private:
 
-	Serial_Port *serial_port;
+    Serial_Port *serial_port;
 
-	bool time_to_exit;
+    bool time_to_exit;
 
-	pthread_t read_tid;
-	pthread_t write_tid;
+    pthread_t read_tid;
+    pthread_t write_tid;
 
-	void read_thread();
-	void write_thread(void);
+    void read_thread();
+    void write_thread(void);
 
-	int toggle_offboard_control( bool flag );
+    int toggle_offboard_control( bool flag );
 };
 
 
