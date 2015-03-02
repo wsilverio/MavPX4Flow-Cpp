@@ -8,4 +8,4 @@ clean:
 	 rm -rf *.o *.run
 
 run-teste:
-	./mavpx4flow.run -d /dev/ttyACM0 -b 57600
+	clear && make && ./mavpx4flow.run -d /dev/ttyACM0 -b 57600
