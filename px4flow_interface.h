@@ -1,23 +1,10 @@
 /****************************************************************************
  *
- *   Copyright (c) 2014 MAVlink Development Team. All rights reserved.
- *   Author: Trent Lukaczyk, <aerialhedgehog@gmail.com>
- *           Jaycee Lock,    <jaycee.lock@gmail.com>
- *           Lorenz Meier,   <lm@inf.ethz.ch>
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name PX4 nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *        Baseado em github.com/mavlink/c_uart_interface_example,
+ *            dos autores MAVlink Development Team:
+ *                Trent Lukaczyk, <aerialhedgehog@gmail.com>
+ *                Jaycee Lock,    <jaycee.lock@gmail.com>
+ *                Lorenz Meier,   <lm@inf.ethz.ch>
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -33,20 +20,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
-
-/**
- * @file px4flow_interface.h
- *
- * @brief Autopilot interface definition
- *
- * Functions for sending and recieving commands to an autopilot via MAVlink
- *
- * @author Trent Lukaczyk, <aerialhedgehog@gmail.com>
- * @author Jaycee Lock,    <jaycee.lock@gmail.com>
- * @author Lorenz Meier,   <lm@inf.ethz.ch>
- *
- */
-
 
 #ifndef PX4FLOW_INTERFACE_H_
 #define PX4FLOW_INTERFACE_H_
@@ -67,7 +40,6 @@
  #include <vector>
 
  #include <opencv2/opencv.hpp>
- #include <algorithm> // copy
 
 // ------------------------------------------------------------------------------
 //   Prototypes

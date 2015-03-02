@@ -1,6 +1,34 @@
 /*
-    Baseado em https://github.com/mavlink/c_uart_interface_example
+*    MavPX4Flow - Comunicador do módulo PX4Flow sobre o protocolo Mavlink
+*        PX4Flow - https://pixhawk.org/modules/px4flow
+*        Mavlink - qgroundcontrol.org/mavlink/
+*
+*        Criado por
+*            Wendeurick Silverio <Twitter @obelonave>, <GitHub @wsilverio>
+*
+*        Baseado em github.com/mavlink/c_uart_interface_example,
+*            dos autores MAVlink Development Team:
+*                Trent Lukaczyk, <aerialhedgehog@gmail.com>
+*                Jaycee Lock,    <jaycee.lock@gmail.com>
+*                Lorenz Meier,   <lm@inf.ethz.ch>
 */
+
+/****************************************************************************
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ ****************************************************************************/
 
 #include <stdio.h>  // printf
 #include <cstdlib>  // EXIT_FAILURE
