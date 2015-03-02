@@ -262,8 +262,6 @@ read_messages()
 
 				case MAVLINK_MSG_ID_ENCAPSULATED_DATA: // #131
 				{
-					
-					break;
 					// uint16_t seqnr
 					// uint8_t data[253]
 
@@ -272,33 +270,43 @@ read_messages()
 					current_messages.time_stamps.encapsulated_data = get_time_usec();
 					this_timestamps.encapsulated_data = current_messages.time_stamps.encapsulated_data;
 
+					// Copia os dados da imagem para o vetor, sincronizando os pacotes
 					if (current_messages.encapsulated_data.seqnr == packet){
-					 	for (uint8_t *p = current_messages.encapsulated_data.data; *p; p++)
-							imgVector.push_back(*p);
+						for (int i = 0; i < current_messages.data_transmission_handshake.payload; ++i)
+							imgVector.push_back(current_messages.encapsulated_data.data[i]);
+
+						// Atualiza o nº do pacote
 						packet++;
+
 					}else{
 						packet = 0;
 						imgVector.clear();
-					} 
-					
-					if(packet == (current_messages.data_transmission_handshake.packets - 1) && (imgVector.size() >= current_messages.data_transmission_handshake.size)){
+					}
+
+					// if({0} && {1})
+					// {0}: verifica se o nº de pacotes já extrapolou o da imagem -> isto é comum nas imagens maiores que 64x64
+					// {1}: evita segmentation fault ao acessar o vetor imgVector. *** Verificar se realmente é necessário ***
+					if(packet >= (current_messages.data_transmission_handshake.packets - 1) && (imgVector.size() >= current_messages.data_transmission_handshake.size)){
+
 						// std::cout 	<< "\nGerando imagem\n"
-						// 			<< "packet: " << packet << "\n"
+						// 			<< "packet: [" << packet << "]\n"
 						// 			<< "packets: " << current_messages.data_transmission_handshake.packets << "\n"
 						// 			<< "vector.size: " << imgVector.size() << "\n"
+						// 			<< "img count pixels: " << current_messages.data_transmission_handshake.height*current_messages.data_transmission_handshake.width << "\n"
 						// 			<< "img.height: " << current_messages.data_transmission_handshake.height << "\n"
 						// 			<< "img.width: " << current_messages.data_transmission_handshake.width << "\n\n";
 
+						// Predefinição da imagem
 						*img = cv::Mat(
 								current_messages.data_transmission_handshake.height,
 								current_messages.data_transmission_handshake.width,
 								CV_8UC1);
 
-						for (register unsigned int x = 0; x < img->cols; x++){
-							for (register unsigned int y = 0; y < img->rows; y++){
+						// Formação da imagem: copia os dados do std::vector para a matriz cv::Mat
+						for (register unsigned int y = 0; y < img->rows; y++)
+							for (register unsigned int x = 0; x < img->cols; x++)
+								// Mapeia o vetor unidimensional na matriz da imagem
 								img->at<uchar>(y,x) = imgVector[x + y*img->cols];
-							}
-						}
 
 						packet = 0;
 						imgVector.clear();
