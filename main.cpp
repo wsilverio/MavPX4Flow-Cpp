@@ -1,10 +1,11 @@
 /*
 *    MavPX4Flow - Comunicador do módulo PX4Flow sobre o protocolo Mavlink
 *        PX4Flow - https://pixhawk.org/modules/px4flow
-*        Mavlink - qgroundcontrol.org/mavlink/
+*        Mavlink - http://qgroundcontrol.org/mavlink/
 *
-*        Criado por
-*            Wendeurick Silverio <Twitter @obelonave>, <GitHub @wsilverio>
+*        Por
+*           Wendeurick Silverio <Twitter @obelonave>, <GitHub @wsilverio>
+*           Disponível em https://github.com/wsilverio/MavPX4Flow-Cpp
 *
 *        Baseado em github.com/mavlink/c_uart_interface_example,
 *            dos autores MAVlink Development Team:
@@ -139,6 +140,9 @@ float Map(float value, float inputMin, float inputMax, float outputMin, float ou
 //   Main
 // ------------------------------------------------------------------------------
 int main(int argc, char **argv){
+
+    // Limpa o console
+    system("clear");
 
     printf("\n### MavPX4Flow ###\n");
 

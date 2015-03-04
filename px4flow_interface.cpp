@@ -1,5 +1,9 @@
 /****************************************************************************
  *
+ *        Por
+ *           Wendeurick Silverio <Twitter @obelonave>, <GitHub @wsilverio>
+ *           Disponível em https://github.com/wsilverio/MavPX4Flow-Cpp
+ *
  *        Baseado em github.com/mavlink/c_uart_interface_example,
  *            dos autores MAVlink Development Team:
  *                Trent Lukaczyk, <aerialhedgehog@gmail.com>
@@ -74,11 +78,21 @@ PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std:
     data = data_;
     img = img_;
     packet = 0;
+
+    // Start mutex
+    int result = pthread_mutex_init(&trava, NULL);
+    if (result != 0){
+        printf("\n mutex init failed\n");
+        throw EXIT_FAILURE;
+    }    
 }
 
 PX4Flow_Interface::
 ~PX4Flow_Interface()
-{}
+{
+    // destroy mutex
+    pthread_mutex_destroy(&trava);
+}
 
 // ------------------------------------------------------------------------------
 //   Read Messages
@@ -136,6 +150,8 @@ read_messages()
                         type, autopilot, base_mode, custom_mode, system_status, mavlink_version
                     };
 
+                    pthread_mutex_lock(&trava);
+
                     switch(msgUserFieldName)
                     {
                         case type:
@@ -177,6 +193,9 @@ read_messages()
                         default: 
                             break;
                     }
+
+                    pthread_mutex_unlock(&trava);
+
                     break;
                 }
 
@@ -195,8 +214,6 @@ read_messages()
                     current_messages.time_stamps.data_transmission_handshake = get_time_usec();
                     this_timestamps.data_transmission_handshake = current_messages.time_stamps.data_transmission_handshake;
 
-                    break;
-
                     if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA){
                         std::cout 
                                 << "type: " << (unsigned int) current_messages.data_transmission_handshake.type
@@ -207,16 +224,12 @@ read_messages()
                                 << "\npayload: " << (unsigned int) current_messages.data_transmission_handshake.payload
                                 << "\njpg_quality: " << (unsigned int) current_messages.data_transmission_handshake.jpg_quality << "\n\n";
 
-                        // imgPointer = (uint8_t*) malloc(current_messages.data_transmission_handshake.size*sizeof(uint8_t) + 1);
-                        // if(!imgPointer){
-                        //     printf("Erro ao alocar memória.\n");
-                        //     exit(EXIT_FAILURE);
-                        // }
-
                     }else{
                         enum Fields{
                             type, size, width, height, packets, payload, jpg_quality
                         };
+
+                        pthread_mutex_lock(&trava);
                                                             
                         switch(msgUserFieldName)
                         {
@@ -265,6 +278,8 @@ read_messages()
                             default:
                                 break;
                         }
+
+                        pthread_mutex_unlock(&trava);
                     }
                     break;
                 }
@@ -281,23 +296,16 @@ read_messages()
 
                     // Se os pacotes estiverem em sincronia
                     if (current_messages.encapsulated_data.seqnr == packet){
-                        
                         // Atualiza o nº do pacote
                         packet++;
                         
                         // Copia os dados da imagem para o vetor
-                        for (int i = 0; i < current_messages.data_transmission_handshake.payload; ++i){
+                        for (int i = 0; i < current_messages.data_transmission_handshake.payload; ++i)
                             imgVector.push_back(current_messages.encapsulated_data.data[i]);
-
-                            // imgPointer[i] = current_messages.encapsulated_data.data[i]; // memcpy ?
-                        }
-
-                        // memcpy(&(imgPointer + current_messages.data_transmission_handshake.payload*current_messages.encapsulated_data.seqnr), &current_messages.encapsulated_data.data, current_messages.data_transmission_handshake.payload * sizeof(uint8_t));
 
                     }else{ // Reset
                         packet = 0;
                         imgVector.clear();
-                        // free(imgPointer);
                     }
 
                     // if({0} && {1})
@@ -314,22 +322,32 @@ read_messages()
                                 << "img pixel count: " << current_messages.data_transmission_handshake.height*current_messages.data_transmission_handshake.width << "\n"
                                 << "vector.size: " << imgVector.size() << "\n\n";
 
-                        // Predefinição da imagem
-                        *img = cv::Mat(
-                                current_messages.data_transmission_handshake.height,
-                                current_messages.data_transmission_handshake.width,
-                                CV_8UC1);
-
+                        // Predefinição da imagem buffer
+                        cv::Mat imgTemp(current_messages.data_transmission_handshake.height,
+                                        current_messages.data_transmission_handshake.width,
+                                        CV_8UC1);
+                        
                         // Formação da imagem: copia os dados do std::vector para a matriz cv::Mat
-                        for (register unsigned int y = 0; y < img->rows; y++)
-                            for (register unsigned int x = 0; x < img->cols; x++)
+                        for (register unsigned int y = 0; y < imgTemp.rows; y++)
+                            for (register unsigned int x = 0; x < imgTemp.cols; x++)
                                 // Mapeia o vetor unidimensional na matriz da imagem
-                                img->at<uchar>(y,x) = imgVector[x + y*img->cols];
+                                imgTemp.at<uchar>(y,x) = imgVector[x + y*imgTemp.cols];
+
+                        pthread_mutex_lock(&trava);
+
+                        if(msgUserFieldName) // VIDEO_ONLY set
+                            // cria uma cópia da imagem
+                            // imgTemp.copyTo(*img);
+                            cv::resize(imgTemp, *img, cv::Size(2*376, 2*240));
+                        else
+                            // redimensiona a imagem: Size(64, 64) -> Size(480, 480), bilinear interpolation
+                            cv::resize(imgTemp, *img, cv::Size(480, 480));
+
+                        pthread_mutex_unlock(&trava);
 
                         // Reset
                         packet = 0;
                         imgVector.clear();
-                        // free(imgPointer);
                     }
                     break;
                 }
@@ -353,6 +371,8 @@ read_messages()
                     enum Fields{
                         time_usec, sensor_id, flow_x, flow_y, flow_comp_m_x, flow_comp_m_y, quality, ground_distance
                     };
+
+                    pthread_mutex_lock(&trava);
 
                     switch(msgUserFieldName)
                     {
@@ -407,6 +427,9 @@ read_messages()
                         default:
                             break;
                     }
+
+                    pthread_mutex_unlock(&trava);
+
                     break;
                 }
 
@@ -434,6 +457,8 @@ read_messages()
                         time_usec, sensor_id, integration_time_us, integrated_x, integrated_y, integrated_xgyro,
                         integrated_ygyro, integrated_zgyro, temperature, quality, time_delta_distance_us, distance
                     };
+
+                    pthread_mutex_lock(&trava);
 
                     switch(msgUserFieldName)
                     {
@@ -512,6 +537,9 @@ read_messages()
                         default:
                             break;
                     }
+
+                    pthread_mutex_unlock(&trava);
+
                     break;
                 }
 
@@ -531,6 +559,8 @@ read_messages()
                     enum Fields{
                         name, time_usec, x, y, z
                     };
+
+                    pthread_mutex_lock(&trava);
 
                     switch(msgUserFieldName)
                     {
@@ -566,6 +596,9 @@ read_messages()
                         default:
                             break;
                     }
+
+                    pthread_mutex_unlock(&trava);
+
                     break;
                 }
 
@@ -583,6 +616,8 @@ read_messages()
                     enum Fields{
                         time_boot_ms, name, value
                     };
+
+                    pthread_mutex_lock(&trava);
 
                     switch(msgUserFieldName)
                     {
@@ -606,6 +641,9 @@ read_messages()
                         default:
                             break;
                     }
+
+                    pthread_mutex_unlock(&trava);
+
                     break;
                 }
 
@@ -623,6 +661,8 @@ read_messages()
                     enum Fields{
                         time_boot_ms, name, value
                     };
+
+                    pthread_mutex_lock(&trava);
 
                     switch(msgUserFieldName)
                     {
@@ -646,6 +686,9 @@ read_messages()
                         default:
                             break;
                     }
+
+                    pthread_mutex_unlock(&trava);
+
                     break;
                 }
 
@@ -866,7 +909,7 @@ start()
 
     // Configura o tipo da imagem
     if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA)
-        this->set_video_only();
+        this->set_video_only(msgUserFieldName);
 
     // // wait for it to be started
     // while ( not writing_status )
@@ -954,6 +997,10 @@ void
 PX4Flow_Interface::
 handle_quit( int sig )
 {
+    if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA && msgUserFieldName){
+        this->set_video_only(0);
+        usleep(100000); // 100ms
+    }
 
     disable_offboard_control();
 
@@ -1034,7 +1081,7 @@ write_thread(void)
 // ------------------------------------------------------------------------------
 void
 PX4Flow_Interface::
-set_video_only(void)
+set_video_only(float val)
 {
     // Configura o tipo da imagem
     // se msgUserFieldName == True: full size image
@@ -1043,7 +1090,7 @@ set_video_only(void)
     mavlink_message_t msg;
     mavlink_param_set_t param;
 
-    param.param_value = msgUserFieldName; // True | False
+    param.param_value = val; // True | False
     param.target_system = system_id;
     param.target_component = px4flow_id;
     // param.param_type;

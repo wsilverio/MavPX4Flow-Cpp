@@ -1,5 +1,7 @@
 /****************************************************************************
  *
+ *        Disponível em https://github.com/wsilverio/MavPX4Flow-Cpp
+ *
  *        Baseado em github.com/mavlink/c_uart_interface_example,
  *            dos autores MAVlink Development Team:
  *                Trent Lukaczyk, <aerialhedgehog@gmail.com>
@@ -35,6 +37,7 @@
 #include <sys/time.h>
 #include <common/mavlink.h>
 #include <opencv2/opencv.hpp> // openCV
+#include <pthread.h>
 
 // ------------------------------------------------------------------------------
 //   Prototypes
@@ -169,12 +172,11 @@ public:
     int msgUserFieldName;
 
     std::vector<uint8_t> imgVector;
-    // uint8_t *imgPointer;
-
     std::vector<float> *data;
 
     uint16_t packet;
     cv::Mat *img;
+    pthread_mutex_t trava;
 
     Mavlink_Messages current_messages;
 
@@ -190,7 +192,7 @@ public:
     void start_read_thread();
     void start_write_thread(void);
 
-    void set_video_only(void);
+    void set_video_only(float val);
 
     void handle_quit( int sig );
 
