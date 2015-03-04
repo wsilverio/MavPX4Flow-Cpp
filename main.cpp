@@ -96,7 +96,10 @@ void Argparse(int argc, char **argv, char *&uart_name, int &baudrate){
         }
     }
 
-    printf("\nDevice: %s\nBaud rate: %d\n\n", uart_name, baudrate);
+    printf( "\n"
+            "Device: %s\n"
+            "Baud rate: %d\n"
+            "\n", uart_name, baudrate);
     return;
 }
 
@@ -274,7 +277,18 @@ int main(int argc, char **argv){
                 // }
 
                 // windowName += fields[msgFieldName];
-                windowName += "image";
+
+                printf("\nEscolha o tipo da imagem:\n\n");
+
+                printf("VIDEO_ONLY (0/1): ");
+                msgFieldName = -1;
+                scanf("%d", &msgFieldName);
+
+                if (msgFieldName){
+                    windowName += "VIDEO_ONLY";
+                }else{
+                    windowName += "image";
+                }
 
             }
             break;
@@ -298,7 +312,7 @@ int main(int argc, char **argv){
                 msgFieldName = -1;
                 scanf("%d", &msgFieldName);
 
-                if (msgFieldName < 0 || msgFieldName >= TAM || msgFieldName == 0){ // time_usec desabilitado
+                if (msgFieldName < 0 || msgFieldName >= TAM){
                     printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
@@ -328,7 +342,7 @@ int main(int argc, char **argv){
                 msgFieldName = -1;
                 scanf("%d", &msgFieldName);
 
-                if (msgFieldName < 0 || msgFieldName >= TAM || msgFieldName == 0){ // time_usec desabilitado
+                if (msgFieldName < 0 || msgFieldName >= TAM){
                     printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
@@ -357,7 +371,7 @@ int main(int argc, char **argv){
                 msgFieldName = -1;
                 scanf("%d", &msgFieldName);
 
-                if (msgFieldName < 0 || msgFieldName >= TAM || msgFieldName == 1){ // time_usec desabilitado
+                if (msgFieldName < 0 || msgFieldName >= TAM){
                     printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
@@ -483,8 +497,10 @@ int main(int argc, char **argv){
     
                 // Verifica se o buffer está vazio
                 if(data.size() < 2){ // 2 porque o programa acessa data[i-1]
-                    std::cout   << "\nAguardando o(s) parâmetro(s) solicitado(o) pelo usuário.\n"
-                                << "Pressione ctrl+c para sair.\n";
+                    printf( "\n"
+                            "Aguardando o(s) parâmetro(s) solicitado(o) pelo usuário.\n"
+                            "Pressione ctrl+c para sair."
+                            "\n\n");
                 
                     // Fica em loop até o recebimento dos parâmetros (min 2)
                     while(data.size() < 2);

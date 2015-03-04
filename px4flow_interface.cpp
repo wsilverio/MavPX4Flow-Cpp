@@ -38,7 +38,6 @@ get_time_usec()
     return _time_stamp.tv_sec*1000000 + _time_stamp.tv_usec;
 }
 
-
 // ----------------------------------------------------------------------------------
 //   PX4Flow Interface Class
 // ----------------------------------------------------------------------------------
@@ -80,7 +79,6 @@ PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std:
 PX4Flow_Interface::
 ~PX4Flow_Interface()
 {}
-
 
 // ------------------------------------------------------------------------------
 //   Read Messages
@@ -138,39 +136,47 @@ read_messages()
                         type, autopilot, base_mode, custom_mode, system_status, mavlink_version
                     };
 
-                    switch(msgUserFieldName){
+                    switch(msgUserFieldName)
+                    {
                         case type:
                         {
                             data->push_back((float) current_messages.heartbeat.type);
-                            // std::cout << "type: " << (float) current_messages.heartbeat.type << "\n";
+                            printf("type: %u\n",    current_messages.heartbeat.type);
                         }break;
+
                         case autopilot:
                         {
-                            data->push_back((float) current_messages.heartbeat.autopilot);
-                            // std::cout << "autopilot: " << (float) current_messages.heartbeat.autopilot << "\n";
+                            data->push_back(    (float) current_messages.heartbeat.autopilot);
+                            printf("autopilot: %u\n",   current_messages.heartbeat.autopilot);
                         }break; 
+
                         case base_mode:
                         {
-                            data->push_back((float) current_messages.heartbeat.base_mode);
-                            // std::cout << "base_mode: " << (float) current_messages.heartbeat.base_mode << "\n";
+                            data->push_back(    (float) current_messages.heartbeat.base_mode);
+                            printf("base_mode: %u\n",   current_messages.heartbeat.base_mode);
                         }break;
-                        case custom_mode:
-                            data->push_back((float) current_messages.heartbeat.custom_mode);
-                            // std::cout << "base_mode: " << (float) current_messages.heartbeat.custom_mode << "\n";
-                            break;
-                        case system_status:
-                            data->push_back((float) current_messages.heartbeat.system_status);
-                            // std::cout << "system_status: " << (float) current_messages.heartbeat.system_status << "\n";
-                            break;
-                        case mavlink_version:
-                            data->push_back((float) current_messages.heartbeat.mavlink_version);
-                            // std::cout << "link_version: " << (float) current_messages.heartbeat.mavlink_version << "\n";
-                            break;
-                        default:
-                            // ########## SAIR DO PGM? ##########
-                            break;                      
-                    }
 
+                        case custom_mode:
+                        {
+                            data->push_back(    (float) current_messages.heartbeat.custom_mode);
+                            printf("custom_mode: %u\n", current_messages.heartbeat.custom_mode);
+                        }break;
+
+                        case system_status:
+                        {
+                            data->push_back(        (float) current_messages.heartbeat.system_status);
+                            printf("system_status: %u\n",   current_messages.heartbeat.system_status);
+                        }break;
+
+                        case mavlink_version:
+                        {
+                            data->push_back(        (float) current_messages.heartbeat.mavlink_version);
+                            printf("link_version: %u\n",    current_messages.heartbeat.mavlink_version);
+                        }break;
+
+                        default: 
+                            break;
+                    }
                     break;
                 }
 
@@ -189,46 +195,77 @@ read_messages()
                     current_messages.time_stamps.data_transmission_handshake = get_time_usec();
                     this_timestamps.data_transmission_handshake = current_messages.time_stamps.data_transmission_handshake;
 
+                    break;
+
                     if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA){
-                        std::cout << "type: " << (float) current_messages.data_transmission_handshake.type << "\n";
-                        std::cout << "size: " << (float) current_messages.data_transmission_handshake.size << "\n";
-                        std::cout << "width: " << (float) current_messages.data_transmission_handshake.width << "\n";
-                        std::cout << "height: " << (float) current_messages.data_transmission_handshake.height << "\n";
-                        std::cout << "packets: " << (float) current_messages.data_transmission_handshake.packets << "\n";
-                        std::cout << "payload: " << (float) current_messages.data_transmission_handshake.payload << "\n";
-                        std::cout << "jpg_quality: " << (float) current_messages.data_transmission_handshake.jpg_quality << "\n\n";
+                        std::cout 
+                                << "type: " << (unsigned int) current_messages.data_transmission_handshake.type
+                                << "\nsize: " << current_messages.data_transmission_handshake.size
+                                << "\nwidth: " << current_messages.data_transmission_handshake.width
+                                << "\nheight: " << current_messages.data_transmission_handshake.height
+                                << "\npackets: " << current_messages.data_transmission_handshake.packets
+                                << "\npayload: " << (unsigned int) current_messages.data_transmission_handshake.payload
+                                << "\njpg_quality: " << (unsigned int) current_messages.data_transmission_handshake.jpg_quality << "\n\n";
+
+                        // imgPointer = (uint8_t*) malloc(current_messages.data_transmission_handshake.size*sizeof(uint8_t) + 1);
+                        // if(!imgPointer){
+                        //     printf("Erro ao alocar memória.\n");
+                        //     exit(EXIT_FAILURE);
+                        // }
+
                     }else{
                         enum Fields{
                             type, size, width, height, packets, payload, jpg_quality
                         };
                                                             
-                        switch(msgUserFieldName){
-                            case type:{
+                        switch(msgUserFieldName)
+                        {
+                            case type:
+                            {
                                 data->push_back((float) current_messages.data_transmission_handshake.type);
+                                printf("type: %u\n",    current_messages.data_transmission_handshake.type);
                             }break;
-                            case size:{
+
+                            case size:
+                            {
                                 data->push_back((float) current_messages.data_transmission_handshake.size);
+                                printf("size: %u\n",    current_messages.data_transmission_handshake.size);
                             }break;
-                            case width:{
+
+                            case width:
+                            {
                                 data->push_back((float) current_messages.data_transmission_handshake.width);
+                                printf("width: %u\n",   current_messages.data_transmission_handshake.width);
                             }break;
-                            case height:{
+
+                            case height:
+                            {
                                 data->push_back((float) current_messages.data_transmission_handshake.height);
+                                printf("height: %u\n",  current_messages.data_transmission_handshake.height);
                             }break;
-                            case packets:{
+
+                            case packets:
+                            {
                                 data->push_back((float) current_messages.data_transmission_handshake.packets);
+                                printf("packets: %u\n", current_messages.data_transmission_handshake.packets);
                             }break;
-                            case payload:{
+
+                            case payload:
+                            {
                                 data->push_back((float) current_messages.data_transmission_handshake.payload);
+                                printf("payload: %u\n", current_messages.data_transmission_handshake.payload);
                             }break;
-                            case jpg_quality:{
-                                data->push_back((float) current_messages.data_transmission_handshake.jpg_quality);
+
+                            case jpg_quality:
+                            {
+                                data->push_back(    (float) current_messages.data_transmission_handshake.jpg_quality);
+                                printf("jpg_quality: %u\n", current_messages.data_transmission_handshake.jpg_quality);
                             }break;
+
                             default:
                                 break;
                         }
                     }
-
                     break;
                 }
 
@@ -242,31 +279,40 @@ read_messages()
                     current_messages.time_stamps.encapsulated_data = get_time_usec();
                     this_timestamps.encapsulated_data = current_messages.time_stamps.encapsulated_data;
 
-                    // Copia os dados da imagem para o vetor, sincronizando os pacotes
+                    // Se os pacotes estiverem em sincronia
                     if (current_messages.encapsulated_data.seqnr == packet){
-                        for (int i = 0; i < current_messages.data_transmission_handshake.payload; ++i)
-                            imgVector.push_back(current_messages.encapsulated_data.data[i]);
-
+                        
                         // Atualiza o nº do pacote
                         packet++;
+                        
+                        // Copia os dados da imagem para o vetor
+                        for (int i = 0; i < current_messages.data_transmission_handshake.payload; ++i){
+                            imgVector.push_back(current_messages.encapsulated_data.data[i]);
 
-                    }else{
+                            // imgPointer[i] = current_messages.encapsulated_data.data[i]; // memcpy ?
+                        }
+
+                        // memcpy(&(imgPointer + current_messages.data_transmission_handshake.payload*current_messages.encapsulated_data.seqnr), &current_messages.encapsulated_data.data, current_messages.data_transmission_handshake.payload * sizeof(uint8_t));
+
+                    }else{ // Reset
                         packet = 0;
                         imgVector.clear();
+                        // free(imgPointer);
                     }
 
                     // if({0} && {1})
                     // {0}: verifica se o nº de pacotes já extrapolou o da imagem -> isto é comum nas imagens maiores que 64x64
-                    // {1}: evita segmentation fault ao acessar o vetor imgVector. *** Verificar se realmente é necessário ***
+                    // {1}: evita 'segmentation fault' ao acessar o vetor imgVector
                     if(packet >= (current_messages.data_transmission_handshake.packets - 1) && (imgVector.size() >= current_messages.data_transmission_handshake.size)){
 
-                        // std::cout    << "\nGerando imagem\n"
-                        //          << "packet: [" << packet << "]\n"
-                        //          << "packets: " << current_messages.data_transmission_handshake.packets << "\n"
-                        //          << "vector.size: " << imgVector.size() << "\n"
-                        //          << "img count pixels: " << current_messages.data_transmission_handshake.height*current_messages.data_transmission_handshake.width << "\n"
-                        //          << "img.height: " << current_messages.data_transmission_handshake.height << "\n"
-                        //          << "img.width: " << current_messages.data_transmission_handshake.width << "\n\n";
+                        std::cout
+                                << "\nGerando imagem\n"
+                                << "packet: [" << packet << "]\n"
+                                << "packets: " << current_messages.data_transmission_handshake.packets << "\n"
+                                << "img.height: " << current_messages.data_transmission_handshake.height << "\n"
+                                << "img.width: " << current_messages.data_transmission_handshake.width << "\n"
+                                << "img pixel count: " << current_messages.data_transmission_handshake.height*current_messages.data_transmission_handshake.width << "\n"
+                                << "vector.size: " << imgVector.size() << "\n\n";
 
                         // Predefinição da imagem
                         *img = cv::Mat(
@@ -280,10 +326,11 @@ read_messages()
                                 // Mapeia o vetor unidimensional na matriz da imagem
                                 img->at<uchar>(y,x) = imgVector[x + y*img->cols];
 
+                        // Reset
                         packet = 0;
                         imgVector.clear();
+                        // free(imgPointer);
                     }
-
                     break;
                 }
 
@@ -302,49 +349,64 @@ read_messages()
                     mavlink_msg_optical_flow_decode(&message, &(current_messages.optical_flow));
                     current_messages.time_stamps.optical_flow = get_time_usec();
                     this_timestamps.optical_flow = current_messages.time_stamps.optical_flow;
-                    // data->push_back(current_messages.optical_flow.flow_x);
 
                     enum Fields{
                         time_usec, sensor_id, flow_x, flow_y, flow_comp_m_x, flow_comp_m_y, quality, ground_distance
                     };
 
-                    switch(msgUserFieldName){
+                    switch(msgUserFieldName)
+                    {
                         case time_usec:
-                            // data->push_back((double) current_messages.optical_flow.time_usec);
-                            // std::cout << "time_usec:" << (float) current_messages.optical_flow.time_usec << "\n";
-                            break;
+                        {
+                            data->push_back(    (float) current_messages.optical_flow.time_usec); // (double) ?
+                            printf("time_usec: %lu\n",  current_messages.optical_flow.time_usec);
+                        }break;
+
                         case sensor_id:
-                            data->push_back((float) current_messages.optical_flow.sensor_id);
-                            // std::cout << "sensor_id: " << (float) current_messages.optical_flow.sensor_id << "\n";
-                            break;
+                        {
+                            data->push_back(    (float) current_messages.optical_flow.sensor_id);
+                            printf("sensor_id: %u\n",   current_messages.optical_flow.sensor_id);
+                        }break;
+
                         case flow_x:
+                        {
                             data->push_back((float) current_messages.optical_flow.flow_x);
-                            // std::cout << "flow_x: " << (float) current_messages.optical_flow.flow_x << "\n";
-                            break;
+                            printf("flow_x: %d\n",  current_messages.optical_flow.flow_x);
+                        }break;
+
                         case flow_y:
+                        {
                             data->push_back((float) current_messages.optical_flow.flow_y);
-                            // std::cout << "flow_y: " << (float) current_messages.optical_flow.flow_y << "\n";
-                            break;
+                            printf("flow_y: %d\n",  current_messages.optical_flow.flow_y);
+                        }break;
+
                         case flow_comp_m_x:
-                            data->push_back((float) current_messages.optical_flow.flow_comp_m_x);
-                            // std::cout << "flow_comp_m_x: " << (float) current_messages.optical_flow.flow_comp_m_x << "\n";
-                            break;
+                        {
+                            data->push_back(                current_messages.optical_flow.flow_comp_m_x);
+                            printf("flow_comp_m_x: %f\n",   current_messages.optical_flow.flow_comp_m_x);
+                        }break;
+
                         case flow_comp_m_y:
-                            data->push_back((float) current_messages.optical_flow.flow_comp_m_y);
-                            // std::cout << "flow_comp_m_y: " << (float) current_messages.optical_flow.flow_comp_m_y << "\n";
-                            break;
+                        {
+                            data->push_back(                current_messages.optical_flow.flow_comp_m_y);
+                            printf("flow_comp_m_y: %f\n",   current_messages.optical_flow.flow_comp_m_y);
+                        }break;
+
                         case quality:
+                        {
                             data->push_back((float) current_messages.optical_flow.quality);
-                            // std::cout << "quality: " << (float) current_messages.optical_flow.quality << "\n";
-                            break;
+                            printf("quality: %u\n", current_messages.optical_flow.quality);
+                        }break;
+
                         case ground_distance:
-                            data->push_back((float) current_messages.optical_flow.ground_distance);
-                            // std::cout << "ground_distance: " << (float) current_messages.optical_flow.ground_distance << "\n";
-                            break;
+                        {
+                            data->push_back(                current_messages.optical_flow.ground_distance);
+                            printf("ground_distance: %f\n", current_messages.optical_flow.ground_distance);
+                        }break;
+
                         default:
                             break;
                     }
-
                     break;
                 }
 
@@ -373,59 +435,83 @@ read_messages()
                         integrated_ygyro, integrated_zgyro, temperature, quality, time_delta_distance_us, distance
                     };
 
-                    switch(msgUserFieldName){
+                    switch(msgUserFieldName)
+                    {
                         case time_usec:
-                            // data->push_back((double) current_messages.optical_flow_rad.time_usec);
-                            // std::cout << "time_usec: " << current_messages.optical_flow_rad.time_usec << "\n";
-                            break;
+                        {
+                            data->push_back(    (float) current_messages.optical_flow_rad.time_usec);
+                            printf("time_usec: %lu\n",  current_messages.optical_flow_rad.time_usec);
+                        }break;
+
                         case sensor_id:
-                            data->push_back((float) current_messages.optical_flow_rad.sensor_id);
-                            // std::cout << "sensor_id: " << (float) current_messages.optical_flow_rad.sensor_id << "\n";
-                            break;
+                        {
+                            data->push_back(    (float) current_messages.optical_flow_rad.sensor_id);
+                            printf("sensor_id: %u\n",   current_messages.optical_flow_rad.sensor_id);
+                        }break;
+
                         case integration_time_us:
-                            data->push_back((float) current_messages.optical_flow_rad.integration_time_us);
-                            // std::cout << "integration_time_us: " << (float) current_messages.optical_flow_rad.integration_time_us << "\n";
-                            break;
+                        {
+                            data->push_back(            (float) current_messages.optical_flow_rad.integration_time_us);
+                            printf("integration_time_us: %u\n", current_messages.optical_flow_rad.integration_time_us);
+                        }break;
+
                         case integrated_x:
-                            data->push_back((float) current_messages.optical_flow_rad.integrated_x);
-                            // std::cout << "integrated_x: " << (float) current_messages.optical_flow_rad.integrated_x << "\n";
-                            break;
+                        {
+                            data->push_back(            current_messages.optical_flow_rad.integrated_x);
+                            printf("integrated_x: %f\n",current_messages.optical_flow_rad.integrated_x);
+                        }break;
+
                         case integrated_y:
-                            data->push_back((float) current_messages.optical_flow_rad.integrated_y);
-                            // std::cout << "integrated_y: " << (float) current_messages.optical_flow_rad.integrated_y << "\n";
-                            break;
+                        {
+                            data->push_back(            current_messages.optical_flow_rad.integrated_y);
+                            printf("integrated_y: %f\n",current_messages.optical_flow_rad.integrated_y);
+                        }break;
+
                         case integrated_xgyro:
-                            data->push_back((float) current_messages.optical_flow_rad.integrated_xgyro);
-                            // std::cout << "integrated_xgyro: " << (float) current_messages.optical_flow_rad.integrated_xgyro << "\n";
-                            break;
+                        {
+                            data->push_back(                current_messages.optical_flow_rad.integrated_xgyro);
+                            printf("integrated_xgyro: %f\n",current_messages.optical_flow_rad.integrated_xgyro);
+                        }break;
+
                         case integrated_ygyro:
-                            data->push_back((float) current_messages.optical_flow_rad.integrated_ygyro);
-                            // std::cout << "integrated_ygyro: " << (float) current_messages.optical_flow_rad.integrated_ygyro << "\n";
-                            break;
+                        {
+                            data->push_back(                current_messages.optical_flow_rad.integrated_ygyro);
+                            printf("integrated_ygyro: %f\n",current_messages.optical_flow_rad.integrated_ygyro);
+                        }break;
+
                         case integrated_zgyro:
-                            data->push_back((float) current_messages.optical_flow_rad.integrated_zgyro);
-                            // std::cout << "integrated_zgyro: " << (float) current_messages.optical_flow_rad.integrated_zgyro << "\n";
-                            break;
+                        {
+                            data->push_back(                current_messages.optical_flow_rad.integrated_zgyro);
+                            printf("integrated_zgyro: %f\n",current_messages.optical_flow_rad.integrated_zgyro);
+                        }break;
+
                         case temperature:
-                            data->push_back((float) current_messages.optical_flow_rad.temperature);
-                            // std::cout << "temperature: " << (float) current_messages.optical_flow_rad.temperature << "\n";
-                            break;
+                        {
+                            data->push_back(    (float) current_messages.optical_flow_rad.temperature);
+                            printf("temperature: %d\n", current_messages.optical_flow_rad.temperature);
+                        }break;
+
                         case quality:
+                        {
                             data->push_back((float) current_messages.optical_flow_rad.quality);
-                            // std::cout << "quality: " << (float) current_messages.optical_flow_rad.quality << "\n";
-                            break;
+                            printf("quality: %u\n", current_messages.optical_flow_rad.quality);
+                        }break;
+
                         case time_delta_distance_us:
-                            data->push_back((float) current_messages.optical_flow_rad.time_delta_distance_us);
-                            // std::cout << "time_delta_distance_us: " << (float) current_messages.optical_flow_rad.time_delta_distance_us << "\n";
-                            break;
+                        {
+                            data->push_back(                (float) current_messages.optical_flow_rad.time_delta_distance_us);
+                            printf("time_delta_distance_us: %u\n",  current_messages.optical_flow_rad.time_delta_distance_us);
+                        }break;
+
                         case distance:
-                            data->push_back((float) current_messages.optical_flow_rad.distance);
-                            // std::cout << "distance: " << (float) current_messages.optical_flow_rad.distance << "\n";
-                            break;
+                        {
+                            data->push_back(        current_messages.optical_flow_rad.distance);
+                            printf("distance: %f\n",current_messages.optical_flow_rad.distance);
+                        }break;
+
                         default:
                             break;
                     }
-
                     break;
                 }
 
@@ -446,30 +532,40 @@ read_messages()
                         name, time_usec, x, y, z
                     };
 
-                    switch(msgUserFieldName){
+                    switch(msgUserFieldName)
+                    {
                         case name:
-                            std::cout << "name: " << current_messages.debug_vect.name << "\n"; // ########## CHAR ##########
-                            break;
+                        {
+                            printf("name: %s\n", current_messages.debug_vect.name);
+                        }break;
+
                         case time_usec:
-                            // data->push_back((double) current_messages.debug_vect.time_usec);
-                            // std::cout << "time_usec: " << current_messages.debug_vect.time_usec << "\n";
-                            break;
+                        {
+                            data->push_back(    (float) current_messages.debug_vect.time_usec);
+                            printf("time_usec: %lu\n",  current_messages.debug_vect.time_usec);
+                        }break;
+
                         case x:
-                            data->push_back((float) current_messages.debug_vect.x);
-                            // std::cout << "x: " << (float) current_messages.debug_vect.x << "\n";
-                            break;
+                        {
+                            data->push_back(    current_messages.debug_vect.x);
+                            printf("x: %f\n",   current_messages.debug_vect.x);
+                        }break;
+
                         case y:
-                            data->push_back((float) current_messages.debug_vect.y);
-                            // std::cout << "y: " << (float) current_messages.debug_vect.y << "\n";
-                            break;
+                        {
+                            data->push_back(    current_messages.debug_vect.y);
+                            printf("y: %f\n",   current_messages.debug_vect.y);
+                        }break;
+
                         case z:
-                            data->push_back((float) current_messages.debug_vect.z);
-                            // std::cout << "z: " << (float) current_messages.debug_vect.z << "\n";
-                            break;
+                        {
+                            data->push_back(    current_messages.debug_vect.z);
+                            printf("z: %f\n",   current_messages.debug_vect.z);
+                        }break;
+
                         default:
                             break;
                     }
-
                     break;
                 }
 
@@ -488,22 +584,28 @@ read_messages()
                         time_boot_ms, name, value
                     };
 
-                    switch(msgUserFieldName){
+                    switch(msgUserFieldName)
+                    {
                         case time_boot_ms:
+                        {
                             data->push_back((float) current_messages.named_value_float.time_boot_ms);
-                            // std::cout << "time_boot_ms: " << (float) current_messages.named_value_float.time_boot_ms << "\n";
-                            break;
+                            printf("time_boot_ms: %u\n", current_messages.named_value_float.time_boot_ms);
+                        }break;
+
                         case name:
-                            std::cout << "name: " << current_messages.named_value_float.name << "\n"; // ########## CHAR ##########
-                            break;
+                        {
+                            printf("name: %s\n", current_messages.named_value_float.name);
+                        }break;
+
                         case value:
-                            data->push_back((float) current_messages.named_value_float.value);
-                            // std::cout << "value: " << (float) current_messages.named_value_float.value << "\n";
-                            break;
+                        {
+                            data->push_back(        current_messages.named_value_float.value);
+                            printf("value: %f\n",   current_messages.named_value_float.value);
+                        }break;
+
                         default:
                             break;
                     }
-
                     break;
                 }
 
@@ -522,22 +624,28 @@ read_messages()
                         time_boot_ms, name, value
                     };
 
-                    switch(msgUserFieldName){
+                    switch(msgUserFieldName)
+                    {
                         case time_boot_ms:
+                        {
                             data->push_back((float) current_messages.named_value_int.time_boot_ms);
-                            // std::cout << "time_boot_ms:" << (float) current_messages.named_value_int.time_boot_ms << "\n";
-                            break;
+                            printf("time_boot_ms: %u\n", current_messages.named_value_int.time_boot_ms);
+                        }break;
+
                         case name:
-                            std::cout << "name:" << current_messages.named_value_int.name << "\n"; // ########## CHAR ##########
-                            break;
+                        {
+                            printf("name: %s\n", current_messages.named_value_int.name);
+                        }break;
+
                         case value:
+                        {
                             data->push_back((float) current_messages.named_value_int.value);
-                            // std::cout << "value:" << (float) current_messages.named_value_int.value << "\n";
-                            break;
+                            printf("value: %d\n", current_messages.named_value_int.value);
+                        }break;
+
                         default:
                             break;
                     }
-
                     break;
                 }
 
@@ -553,8 +661,8 @@ read_messages()
         } // end: if read message
 
         // give the write thread time to use the port
-        // if ( writing_status > false )
-        //  usleep(100); // look for components of batches at 10kHz
+        if ( writing_status > false )
+         usleep(100); // look for components of batches at 10kHz
 
     } // end: while not received all
 
@@ -612,7 +720,6 @@ enable_offboard_control()
 
 }
 
-
 // ------------------------------------------------------------------------------
 //   Stop Off-Board Mode
 // ------------------------------------------------------------------------------
@@ -648,7 +755,6 @@ disable_offboard_control()
 
 }
 
-
 // ------------------------------------------------------------------------------
 //   Toggle Off-Board Mode
 // ------------------------------------------------------------------------------
@@ -674,7 +780,6 @@ toggle_offboard_control( bool flag )
     // Done!
     return len;
 }
-
 
 // ------------------------------------------------------------------------------
 //   STARTUP
@@ -748,63 +853,32 @@ start()
     if ( not px4flow_id )
     {
         px4flow_id = current_messages.compid;
-        printf("GOT AUTOPILOT COMPONENT ID: %i\n", px4flow_id);
-        printf("\n");
+        printf("GOT AUTOPILOT COMPONENT ID: %i\n\n", px4flow_id);
     }
-
-
-    // --------------------------------------------------------------------------
-    //   GET INITIAL POSITION
-    // --------------------------------------------------------------------------
-
-    // // Wait for initial position ned
-    // while ( not ( current_messages.time_stamps.local_position_ned &&
-    //            current_messages.time_stamps.attitude            )  )
-    // {
-    //  if ( time_to_exit )
-    //      return;
-    //  usleep(500000);
-    // }
-
-    // // copy initial position ned
-    // Mavlink_Messages local_data = current_messages;
-    // initial_position.x        = local_data.local_position_ned.x;
-    // initial_position.y        = local_data.local_position_ned.y;
-    // initial_position.z        = local_data.local_position_ned.z;
-    // initial_position.vx       = local_data.local_position_ned.vx;
-    // initial_position.vy       = local_data.local_position_ned.vy;
-    // initial_position.vz       = local_data.local_position_ned.vz;
-    // initial_position.yaw      = local_data.attitude.yaw;
-    // initial_position.yaw_rate = local_data.attitude.yawspeed;
-
-    // printf("INITIAL POSITION XYZ = [ %.4f , %.4f , %.4f ] \n", initial_position.x, initial_position.y, initial_position.z);
-    // printf("INITIAL POSITION YAW = %.4f \n", initial_position.yaw);
-    // printf("\n");
-
-    // we need this before starting the write thread
-
 
     // --------------------------------------------------------------------------
     //   WRITE THREAD
     // --------------------------------------------------------------------------
     printf("START WRITE THREAD \n");
 
-    // result = pthread_create( &write_tid, NULL, &start_px4flow_interface_write_thread, this );
-    // if ( result ) throw result;
+    result = pthread_create( &write_tid, NULL, &start_px4flow_interface_write_thread, this );
+    if ( result ) throw result;
 
-    // wait for it to be started
+    // Configura o tipo da imagem
+    if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA)
+        this->set_video_only();
+
+    // // wait for it to be started
     // while ( not writing_status )
-    //  usleep(100000); // 10Hz
+    //     usleep(100000); // 10Hz
 
     // now we're streaming setpoint commands
     // printf("\n");
-
 
     // Done!
     return;
 
 }
-
 
 // ------------------------------------------------------------------------------
 //   SHUTDOWN
@@ -852,7 +926,6 @@ start_read_thread()
 
 }
 
-
 // ------------------------------------------------------------------------------
 //   Write Thread
 // ------------------------------------------------------------------------------
@@ -874,7 +947,6 @@ start_write_thread(void)
 
 }
 
-
 // ------------------------------------------------------------------------------
 //   Quit Handler
 // ------------------------------------------------------------------------------
@@ -895,8 +967,6 @@ handle_quit( int sig )
 
 }
 
-
-
 // ------------------------------------------------------------------------------
 //   Read Thread
 // ------------------------------------------------------------------------------
@@ -916,7 +986,6 @@ read_thread()
 
     return;
 }
-
 
 // ------------------------------------------------------------------------------
 //   Write Thread
@@ -960,8 +1029,35 @@ write_thread(void)
 
 }
 
-// End PX4Flow_Interface
+// ------------------------------------------------------------------------------
+//   Set Video Only
+// ------------------------------------------------------------------------------
+void
+PX4Flow_Interface::
+set_video_only(void)
+{
+    // Configura o tipo da imagem
+    // se msgUserFieldName == True: full size image
+    // se msgUserFieldName == False: 64x64 px
+        
+    mavlink_message_t msg;
+    mavlink_param_set_t param;
 
+    param.param_value = msgUserFieldName; // True | False
+    param.target_system = system_id;
+    param.target_component = px4flow_id;
+    // param.param_type;
+
+    // https://github.com/PX4/Flow/blob/master/src/settings.c
+    //      global_data.param_name[PARAM_VIDEO_ONLY]
+    //          "VIDEO_ONLY"
+    strcpy(param.param_id, "VIDEO_ONLY");
+        
+    mavlink_msg_param_set_encode(this->system_id, this->px4flow_id, &msg, &param);
+    this->write_message(msg);
+}
+
+// End PX4Flow_Interface
 
 // ------------------------------------------------------------------------------
 //  Pthread Starter Helper Functions
@@ -992,6 +1088,3 @@ start_px4flow_interface_write_thread(void *args)
     // done!
     return NULL;
 }
-
-
-

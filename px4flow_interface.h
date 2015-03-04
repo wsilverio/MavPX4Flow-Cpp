@@ -33,13 +33,8 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/time.h>
-
 #include <common/mavlink.h>
-
- #include <iostream>
- #include <vector>
-
- #include <opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp> // openCV
 
 // ------------------------------------------------------------------------------
 //   Prototypes
@@ -174,6 +169,7 @@ public:
     int msgUserFieldName;
 
     std::vector<uint8_t> imgVector;
+    // uint8_t *imgPointer;
 
     std::vector<float> *data;
 
@@ -193,6 +189,8 @@ public:
 
     void start_read_thread();
     void start_write_thread(void);
+
+    void set_video_only(void);
 
     void handle_quit( int sig );
 
