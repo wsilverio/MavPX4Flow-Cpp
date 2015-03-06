@@ -63,6 +63,7 @@ struct Time_Stamps
     }
 
     uint64_t heartbeat;
+    uint64_t param_value;
     uint64_t data_transmission_handshake;
     uint64_t encapsulated_data;
     uint64_t optical_flow;
@@ -75,6 +76,7 @@ struct Time_Stamps
     reset_timestamps()
     {
         heartbeat = 0;
+        param_value = 0;
         data_transmission_handshake = 0;
         encapsulated_data = 0;
         optical_flow = 0;
@@ -118,6 +120,11 @@ struct Mavlink_Messages {
     // Named Value Int
     mavlink_named_value_int_t named_value_int;
 
+    // Param Value
+    mavlink_param_value_t param_value;
+    
+    std::vector<mavlink_param_value_t> vector_param_value;
+
     // System Parameters?
 
     // Time Stamps
@@ -131,7 +138,6 @@ struct Mavlink_Messages {
 
 };
 
-// Struct com os tipos comuns entre as mensagens
 
 // ----------------------------------------------------------------------------------
 //   Autopilot Interface Class
@@ -192,6 +198,7 @@ public:
     void start_read_thread();
     void start_write_thread(void);
 
+    void param_request_list(void);
     void set_video_only(float val);
 
     void handle_quit( int sig );

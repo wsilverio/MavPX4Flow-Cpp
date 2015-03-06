@@ -199,6 +199,53 @@ read_messages()
                     break;
                 }
 
+                case MAVLINK_MSG_ID_PARAM_VALUE: // #22
+                {
+                    // float param_value
+                    // uint16_t param_count
+                    // uint16_t param_index
+                    // char param_id[16]
+                    // uint8_t param_type
+
+                    // printf("MAVLINK_PARAM_VALUE\n");
+                    mavlink_msg_param_value_decode(&message, &(current_messages.param_value));
+                    current_messages.time_stamps.param_value = get_time_usec();
+                    this_timestamps.param_value = current_messages.time_stamps.param_value;
+
+                    if(current_messages.vector_param_value.size() < current_messages.param_value.param_count)
+                        current_messages.vector_param_value.resize(current_messages.param_value.param_count);
+
+                    current_messages.vector_param_value[current_messages.param_value.param_index] = current_messages.param_value;
+
+                    printf( "param_value: %f\n"
+                            "param_count: %u\n"
+                            "param_index: %u\n"
+                            "param_id: %s\n"
+                            "param_type: %u\n\n",
+                            current_messages.param_value.param_value,
+                            current_messages.param_value.param_count,
+                            current_messages.param_value.param_index,
+                            current_messages.param_value.param_id,
+                            current_messages.param_value.param_type);
+
+                    // printf( "param_value: %f\n"
+                    //         "param_count: %u\n"
+                    //         "param_index: %u\n"
+                    //         "param_id: %s\n"
+                    //         "param_type: %u\n\n",
+                    //         current_messages.vector_param_value[current_messages.param_value.param_index].param_value,
+                    //         current_messages.vector_param_value[current_messages.param_value.param_index].param_count,
+                    //         current_messages.vector_param_value[current_messages.param_value.param_index].param_index,
+                    //         current_messages.vector_param_value[current_messages.param_value.param_index].param_id,
+                    //         current_messages.vector_param_value[current_messages.param_value.param_index].param_type);
+
+                    pthread_mutex_lock(&trava);
+                    data->push_back((float) current_messages.param_value.param_index);
+                    pthread_mutex_unlock(&trava);
+
+                    break;
+                }
+
                 case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE: // #130
                 {
                     // uint32_t size
@@ -907,8 +954,11 @@ start()
     result = pthread_create( &write_tid, NULL, &start_px4flow_interface_write_thread, this );
     if ( result ) throw result;
 
-    // Configura o tipo da imagem
-    if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA)
+    if(msgUserID == MAVLINK_MSG_ID_PARAM_VALUE)
+        // Solicita todos os parâmetros da PX4Flow
+        this->param_request_list();
+    else if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA)
+        // Configura o tipo da imagem
         this->set_video_only(msgUserFieldName);
 
     // // wait for it to be started
@@ -1074,6 +1124,23 @@ write_thread(void)
 
     return;
 
+}
+
+// ------------------------------------------------------------------------------
+//   Param Request List
+// ------------------------------------------------------------------------------
+void
+PX4Flow_Interface::
+param_request_list(void)
+{
+    mavlink_message_t msg;
+    mavlink_param_request_list_t param_req_lst;
+
+    param_req_lst.target_system = system_id;
+    param_req_lst.target_component = px4flow_id;
+
+    mavlink_msg_param_request_list_encode(this->system_id, this->px4flow_id, &msg, &param_req_lst);
+    this->write_message(msg);
 }
 
 // ------------------------------------------------------------------------------

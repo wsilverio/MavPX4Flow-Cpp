@@ -169,10 +169,11 @@ int main(int argc, char **argv){
             OPTICAL_FLOW_RAD,
             DEBUG_VECT,
             NAMED_VALUE_FLOAT,
-            NAMED_VALUE_INT
+            NAMED_VALUE_INT,
+            PARAM_VALUE
         };
 
-        #define TAM 8
+        #define TAM 9
         const char *names[TAM] = 
         {
             "HEARTBEAT",
@@ -182,7 +183,8 @@ int main(int argc, char **argv){
             "OPTICAL_FLOW_RAD",
             "DEBUG_VECT",
             "NAMED_VALUE_FLOAT",
-            "NAMED_VALUE_INT"
+            "NAMED_VALUE_INT",
+            "PARAM_VALUE"
         };
 
         printf("Escolha a mensagem Mavlink:\n\n");
@@ -443,6 +445,13 @@ int main(int argc, char **argv){
             }
             break;
 
+            case PARAM_VALUE:
+            {
+                msgID = MAVLINK_MSG_ID_PARAM_VALUE;
+                windowName = "PARAM_VALUE";
+
+            }break;
+
             default:
             {
                 printf("\n*** Erro: mensagem ainda não implementada ***\n\n");
@@ -476,7 +485,7 @@ int main(int argc, char **argv){
         // Controlador de saída. Ver função Quit_Handler()
         serial_port_quit = &serial_port;
 
-        // Gerenciador Mavlink -> Imagem// Gerenciador Mavlink -> Datos
+        // Gerenciador Mavlink
         PX4Flow_Interface px4flow(&serial_port, msgID, msgFieldName, &data, &imagemPlot);
         // Controlador de saída. Ver função Quit_Handler()
         px4flow_interface_quit = &px4flow;
