@@ -522,7 +522,6 @@ int main(int argc, char **argv){
                 // Últimos WIDTH elementos do buffer
                 if (data.size() > WIDTH)
                     data.erase(data.begin(), data.end() - WIDTH);
-                    // data.erase(data.begin());
     
                 // Armazena os extremos do buffer
                 float min = *min_element(data.begin(), data.end());

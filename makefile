@@ -7,4 +7,4 @@ clean:
 	 rm -rf *.o *.run
 
 run-teste:
-	./mavpx4flow.run -d /dev/ttyACM0 -b 57600
+	./mavpx4flow.run -d /dev/ttyACM0 -b 115200 57600

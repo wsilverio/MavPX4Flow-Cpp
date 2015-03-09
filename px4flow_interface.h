@@ -161,7 +161,7 @@ class PX4Flow_Interface
 
 public:
 
-    PX4Flow_Interface();
+    PX4Flow_Interface(){};
     PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_, cv::Mat *img_);
     ~PX4Flow_Interface();
 
