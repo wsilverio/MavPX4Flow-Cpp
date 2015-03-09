@@ -46,6 +46,14 @@ Serial_Port(char *&uart_name_ , int &baudrate_)
 }
 
 Serial_Port::
+Serial_Port(std::string uart_name_, int &baudrate_)
+{
+    initialize_defaults();
+    uart_name = (char*) uart_name_.c_str();
+    baudrate  = baudrate_;
+}
+
+Serial_Port::
 Serial_Port()
 {
     initialize_defaults();
