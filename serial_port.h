@@ -39,6 +39,7 @@
 #include <signal.h>
 
 #include <common/mavlink.h>
+#include <string>
 
 
 // ------------------------------------------------------------------------------
@@ -89,6 +90,7 @@ public:
 
     Serial_Port();
     Serial_Port(char *&uart_name_, int &baudrate_);
+    Serial_Port(std::string uart_name_, int &baudrate_);
     void initialize_defaults();
     ~Serial_Port();
 
