@@ -516,6 +516,8 @@ int main(int argc, char **argv){
                             "Aguardando o(s) parâmetro(s) solicitado(o) pelo usuário.\n"
                             "Pressione ctrl+c para sair."
                             "\n\n");
+
+                    px4flow.param_request_list();
                 
                     // Fica em loop até o recebimento dos parâmetros (min 2)
                     while(px4flow.data.size() < 2);
@@ -540,7 +542,7 @@ int main(int argc, char **argv){
                 cv::putText(imagemPlot, std::to_string(px4flow.data.back()), cv::Point(10, 20), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(68,225,242), 1, CV_AA);
 
                 // Fecha o programa caso a tecla ESC seja pressionada sobre a janela
-                char c = (char) cvWaitKey(1);
+                char c = (char) cvWaitKey(1); // 1ms
                 if(c == 27) Quit_Handler(c); // ESC key
 
                 // Exibe a imagem
@@ -549,7 +551,7 @@ int main(int argc, char **argv){
             }else{
                
                 do{
-                    char c = (char) cvWaitKey(1);
+                    char c = (char) cvWaitKey(1); // 1ms
                     if(c == 27) Quit_Handler(c); // ESC key
                 }while(not px4flow.img.rows && not px4flow.img.cols); // aguarda imagem válida
 

@@ -123,10 +123,10 @@ read_messages()
             current_messages.sysid  = message.sysid;
             current_messages.compid = message.compid;
 
-            if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA and message.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE){
+            if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA and message.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE){ // or message.msgid == MAVLINK_MSG_ID_PARAM_VALUE){
                 // pass
             }else if(message.msgid != msgUserID)
-                return;
+                continue;
 
             // Handle Message ID
             switch (message.msgid)
@@ -220,11 +220,6 @@ read_messages()
                     current_messages.time_stamps.param_value = get_time_usec();
                     this_timestamps.param_value = current_messages.time_stamps.param_value;
 
-                    if(current_messages.vector_param_value.size() < current_messages.param_value.param_count)
-                        current_messages.vector_param_value.resize(current_messages.param_value.param_count);
-
-                    current_messages.vector_param_value[current_messages.param_value.param_index] = current_messages.param_value;
-
                     if(debug) printf( "param_value: %f\n"
                             "param_count: %u\n"
                             "param_index: %u\n"
@@ -235,6 +230,11 @@ read_messages()
                             current_messages.param_value.param_index,
                             current_messages.param_value.param_id,
                             current_messages.param_value.param_type);
+
+                    if(current_messages.vector_param_value.size() < current_messages.param_value.param_count)
+                        current_messages.vector_param_value.resize(current_messages.param_value.param_count);
+
+                    current_messages.vector_param_value[current_messages.param_value.param_index] = current_messages.param_value;
 
                     // if(debug) printf( "param_value: %f\n"
                     //         "param_count: %u\n"
@@ -1009,12 +1009,20 @@ start()
     result = pthread_create( &write_tid, NULL, &start_px4flow_interface_write_thread, this );
     if ( result ) throw result;
 
-    if(msgUserID == MAVLINK_MSG_ID_PARAM_VALUE)
-        // Solicita todos os parâmetros da PX4Flow
-        this->param_request_list();
-    else if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA)
+
+    if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA){
         // Configura o tipo da imagem
         this->set_video_only(msgUserFieldName);
+    }
+    else{
+        // Desabilita VIDEO_ONLY
+        this->set_video_only(0);
+        
+        if(msgUserID == MAVLINK_MSG_ID_PARAM_VALUE){
+            // Solicita todos os parâmetros da PX4Flow
+            this->param_request_list();
+        }
+    }
 
     // // wait for it to be started
     // while ( not writing_status )
@@ -1102,9 +1110,12 @@ void
 PX4Flow_Interface::
 handle_quit( int sig )
 {
+    // Caso esteja no modo VIDEO_ONLY
     if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA && msgUserFieldName){
+        // Desabilita VIDEO_ONLY
+        if (debug) printf("Desabilitando modo VIDEO_ONLY\n");
         this->set_video_only(0);
-        usleep(100000); // 100ms
+        usleep(500000); // 500ms
     }
 
     disable_offboard_control();
@@ -1116,7 +1127,6 @@ handle_quit( int sig )
     catch (int error) {
         fprintf(stderr,"Warning, could not stop autopilot interface\n");
     }
-
 }
 
 // ------------------------------------------------------------------------------
@@ -1212,7 +1222,7 @@ set_video_only(float val)
     mavlink_message_t msg;
     mavlink_param_set_t param;
 
-    param.param_value = val; // True | False
+    param.param_value = val;
     param.target_system = system_id;
     param.target_component = px4flow_id;
     // param.param_type;
