@@ -123,10 +123,10 @@ read_messages()
             current_messages.sysid  = message.sysid;
             current_messages.compid = message.compid;
 
-            if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA and message.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE){ // or message.msgid == MAVLINK_MSG_ID_PARAM_VALUE){
-                // pass
-            }else if(message.msgid != msgUserID)
-                continue;
+            // if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA and message.msgid == MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE){ // or message.msgid == MAVLINK_MSG_ID_PARAM_VALUE){
+            //     // pass
+            // }else if(message.msgid != msgUserID)
+            //     continue;
 
             // Handle Message ID
             switch (message.msgid)
@@ -145,6 +145,9 @@ read_messages()
                     mavlink_msg_heartbeat_decode(&message, &(current_messages.heartbeat));
                     current_messages.time_stamps.heartbeat = get_time_usec();
                     this_timestamps.heartbeat = current_messages.time_stamps.heartbeat;
+
+                    if(message.msgid != msgUserID)
+                        break;
                     
                     enum Fields{
                         type, autopilot, base_mode, custom_mode, system_status, mavlink_version
@@ -220,6 +223,9 @@ read_messages()
                     current_messages.time_stamps.param_value = get_time_usec();
                     this_timestamps.param_value = current_messages.time_stamps.param_value;
 
+                    if(message.msgid != msgUserID)
+                        break;
+
                     if(debug) printf( "param_value: %f\n"
                             "param_count: %u\n"
                             "param_index: %u\n"
@@ -280,6 +286,10 @@ read_messages()
                                 << "\njpg_quality: " << (unsigned int) current_messages.data_transmission_handshake.jpg_quality << "\n\n";
 
                     }else{
+
+                        if(message.msgid != msgUserID)
+                            break;
+
                         enum Fields{
                             type, size, width, height, packets, payload, jpg_quality
                         };
@@ -378,7 +388,8 @@ read_messages()
                     // {1}: evita 'segmentation fault' ao acessar o vetor imgVector
                     if(packet >= (current_messages.data_transmission_handshake.packets - 1) && (imgVector.size() >= current_messages.data_transmission_handshake.size)){
 
-                        if(debug)   std::cout
+                        if(debug && message.msgid == msgUserID)
+                                    std::cout
                                     << "\nGerando imagem\n"
                                     << "packet: [" << packet << "]\n"
                                     << "packets: " << current_messages.data_transmission_handshake.packets << "\n"
@@ -433,6 +444,9 @@ read_messages()
                     mavlink_msg_optical_flow_decode(&message, &(current_messages.optical_flow));
                     current_messages.time_stamps.optical_flow = get_time_usec();
                     this_timestamps.optical_flow = current_messages.time_stamps.optical_flow;
+
+                    if(message.msgid != msgUserID)
+                        break;
 
                     enum Fields{
                         time_usec, sensor_id, flow_x, flow_y, flow_comp_m_x, flow_comp_m_y, quality, ground_distance
@@ -530,6 +544,9 @@ read_messages()
                     mavlink_msg_optical_flow_rad_decode(&message, &(current_messages.optical_flow_rad));
                     current_messages.time_stamps.optical_flow_rad = get_time_usec();
                     this_timestamps.optical_flow_rad = current_messages.time_stamps.optical_flow_rad;
+
+                    if(message.msgid != msgUserID)
+                        break;
 
                     enum Fields{
                         time_usec, sensor_id, integration_time_us, integrated_x, integrated_y, integrated_xgyro,
@@ -654,6 +671,9 @@ read_messages()
                     current_messages.time_stamps.debug_vect = get_time_usec();
                     this_timestamps.debug_vect = current_messages.time_stamps.debug_vect;
 
+                    if(message.msgid != msgUserID)
+                        break;
+
                     enum Fields{
                         name, time_usec, x, y, z
                     };
@@ -715,6 +735,9 @@ read_messages()
                     current_messages.time_stamps.named_value_float = get_time_usec();
                     this_timestamps.named_value_float = current_messages.time_stamps.named_value_float;
 
+                    if(message.msgid != msgUserID)
+                        break;
+
                     enum Fields{
                         time_boot_ms, name, value
                     };
@@ -759,6 +782,9 @@ read_messages()
                     mavlink_msg_named_value_int_decode(&message, &(current_messages.named_value_int));
                     current_messages.time_stamps.named_value_int = get_time_usec();
                     this_timestamps.named_value_int = current_messages.time_stamps.named_value_int;
+
+                    if(message.msgid != msgUserID)
+                        break;
 
                     enum Fields{
                         time_boot_ms, name, value
