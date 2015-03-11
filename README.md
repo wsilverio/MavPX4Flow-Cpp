@@ -18,7 +18,7 @@ Se desejar, altere o tamanho da tela, no arquivo [main.cpp](https://github.com/w
 Uso:
 ```
 $ make
-$ ./mavpx4flow.run -d <dispositivo> -b <baudrate>
+$ ./mavpx4flow.run -d <dispositivo> -b <baudrate> [--debug]
 ```
 Exemplo:
 ```
