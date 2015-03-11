@@ -50,7 +50,7 @@ get_time_usec()
 //   Con/De structors
 // ------------------------------------------------------------------------------
 PX4Flow_Interface::
-PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_, cv::Mat *img_)
+PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, bool state)
 {
     // initialize attributes
     write_count = 0;
@@ -75,9 +75,9 @@ PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std:
     msgUserID = msgID_;
     msgUserFieldName = msgFieldName_;
     
-    data = data_;
-    img = img_;
     packet = 0;
+
+    debug = state;
 
     // Start mutex
     int result = pthread_mutex_init(&trava, NULL);
@@ -141,7 +141,7 @@ read_messages()
                     // uint8_t system_status
                     // uint8_t mavlink_version
 
-                    // printf("MAVLINK_MSG_ID_HEARTBEAT\n");
+                    // if(debug) printf("MAVLINK_MSG_ID_HEARTBEAT\n");
                     mavlink_msg_heartbeat_decode(&message, &(current_messages.heartbeat));
                     current_messages.time_stamps.heartbeat = get_time_usec();
                     this_timestamps.heartbeat = current_messages.time_stamps.heartbeat;
@@ -150,51 +150,59 @@ read_messages()
                         type, autopilot, base_mode, custom_mode, system_status, mavlink_version
                     };
 
-                    pthread_mutex_lock(&trava);
-
                     switch(msgUserFieldName)
                     {
                         case type:
                         {
-                            data->push_back((float) current_messages.heartbeat.type);
-                            printf("type: %u\n",    current_messages.heartbeat.type);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.heartbeat.type);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("type: %u\n", current_messages.heartbeat.type);
                         }break;
 
                         case autopilot:
                         {
-                            data->push_back(    (float) current_messages.heartbeat.autopilot);
-                            printf("autopilot: %u\n",   current_messages.heartbeat.autopilot);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.heartbeat.autopilot);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("autopilot: %u\n", current_messages.heartbeat.autopilot);
                         }break; 
 
                         case base_mode:
                         {
-                            data->push_back(    (float) current_messages.heartbeat.base_mode);
-                            printf("base_mode: %u\n",   current_messages.heartbeat.base_mode);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.heartbeat.base_mode);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("base_mode: %u\n", current_messages.heartbeat.base_mode);
                         }break;
 
                         case custom_mode:
                         {
-                            data->push_back(    (float) current_messages.heartbeat.custom_mode);
-                            printf("custom_mode: %u\n", current_messages.heartbeat.custom_mode);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.heartbeat.custom_mode);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("custom_mode: %u\n", current_messages.heartbeat.custom_mode);
                         }break;
 
                         case system_status:
                         {
-                            data->push_back(        (float) current_messages.heartbeat.system_status);
-                            printf("system_status: %u\n",   current_messages.heartbeat.system_status);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.heartbeat.system_status);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("system_status: %u\n", current_messages.heartbeat.system_status);
                         }break;
 
                         case mavlink_version:
                         {
-                            data->push_back(        (float) current_messages.heartbeat.mavlink_version);
-                            printf("link_version: %u\n",    current_messages.heartbeat.mavlink_version);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.heartbeat.mavlink_version);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("link_version: %u\n", current_messages.heartbeat.mavlink_version);
                         }break;
 
                         default: 
                             break;
                     }
-
-                    pthread_mutex_unlock(&trava);
 
                     break;
                 }
@@ -207,7 +215,7 @@ read_messages()
                     // char param_id[16]
                     // uint8_t param_type
 
-                    // printf("MAVLINK_PARAM_VALUE\n");
+                    // if(debug) printf("MAVLINK_PARAM_VALUE\n");
                     mavlink_msg_param_value_decode(&message, &(current_messages.param_value));
                     current_messages.time_stamps.param_value = get_time_usec();
                     this_timestamps.param_value = current_messages.time_stamps.param_value;
@@ -217,7 +225,7 @@ read_messages()
 
                     current_messages.vector_param_value[current_messages.param_value.param_index] = current_messages.param_value;
 
-                    printf( "param_value: %f\n"
+                    if(debug) printf( "param_value: %f\n"
                             "param_count: %u\n"
                             "param_index: %u\n"
                             "param_id: %s\n"
@@ -228,7 +236,7 @@ read_messages()
                             current_messages.param_value.param_id,
                             current_messages.param_value.param_type);
 
-                    // printf( "param_value: %f\n"
+                    // if(debug) printf( "param_value: %f\n"
                     //         "param_count: %u\n"
                     //         "param_index: %u\n"
                     //         "param_id: %s\n"
@@ -240,7 +248,7 @@ read_messages()
                     //         current_messages.vector_param_value[current_messages.param_value.param_index].param_type);
 
                     pthread_mutex_lock(&trava);
-                    data->push_back((float) current_messages.param_value.param_index);
+                    data.push_back((float) current_messages.param_value.param_index);
                     pthread_mutex_unlock(&trava);
 
                     break;
@@ -256,12 +264,12 @@ read_messages()
                     // uint8_t payload
                     // uint8_t jpg_quality
 
-                    // printf("MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE\n");
+                    // if(debug) printf("MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE\n");
                     mavlink_msg_data_transmission_handshake_decode(&message, &(current_messages.data_transmission_handshake));
                     current_messages.time_stamps.data_transmission_handshake = get_time_usec();
                     this_timestamps.data_transmission_handshake = current_messages.time_stamps.data_transmission_handshake;
 
-                    if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA){
+                    if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA && debug){
                         std::cout 
                                 << "type: " << (unsigned int) current_messages.data_transmission_handshake.type
                                 << "\nsize: " << current_messages.data_transmission_handshake.size
@@ -276,57 +284,67 @@ read_messages()
                             type, size, width, height, packets, payload, jpg_quality
                         };
 
-                        pthread_mutex_lock(&trava);
-                                                            
                         switch(msgUserFieldName)
                         {
                             case type:
                             {
-                                data->push_back((float) current_messages.data_transmission_handshake.type);
-                                printf("type: %u\n",    current_messages.data_transmission_handshake.type);
+                                pthread_mutex_lock(&trava);
+                                data.push_back((float) current_messages.data_transmission_handshake.type);
+                                pthread_mutex_unlock(&trava);
+                                if(debug) printf("type: %u\n", current_messages.data_transmission_handshake.type);
                             }break;
 
                             case size:
                             {
-                                data->push_back((float) current_messages.data_transmission_handshake.size);
-                                printf("size: %u\n",    current_messages.data_transmission_handshake.size);
+                                pthread_mutex_lock(&trava);
+                                data.push_back((float) current_messages.data_transmission_handshake.size);
+                                pthread_mutex_unlock(&trava);
+                                if(debug) printf("size: %u\n", current_messages.data_transmission_handshake.size);
                             }break;
 
                             case width:
                             {
-                                data->push_back((float) current_messages.data_transmission_handshake.width);
-                                printf("width: %u\n",   current_messages.data_transmission_handshake.width);
+                                pthread_mutex_lock(&trava);
+                                data.push_back((float) current_messages.data_transmission_handshake.width);
+                                pthread_mutex_unlock(&trava);
+                                if(debug) printf("width: %u\n", current_messages.data_transmission_handshake.width);
                             }break;
 
                             case height:
                             {
-                                data->push_back((float) current_messages.data_transmission_handshake.height);
-                                printf("height: %u\n",  current_messages.data_transmission_handshake.height);
+                                pthread_mutex_lock(&trava);
+                                data.push_back((float) current_messages.data_transmission_handshake.height);
+                                pthread_mutex_unlock(&trava);
+                                if(debug) printf("height: %u\n", current_messages.data_transmission_handshake.height);
                             }break;
 
                             case packets:
                             {
-                                data->push_back((float) current_messages.data_transmission_handshake.packets);
-                                printf("packets: %u\n", current_messages.data_transmission_handshake.packets);
+                                pthread_mutex_lock(&trava);
+                                data.push_back((float) current_messages.data_transmission_handshake.packets);
+                                pthread_mutex_unlock(&trava);
+                                if(debug) printf("packets: %u\n", current_messages.data_transmission_handshake.packets);
                             }break;
 
                             case payload:
                             {
-                                data->push_back((float) current_messages.data_transmission_handshake.payload);
-                                printf("payload: %u\n", current_messages.data_transmission_handshake.payload);
+                                pthread_mutex_lock(&trava);
+                                data.push_back((float) current_messages.data_transmission_handshake.payload);
+                                pthread_mutex_unlock(&trava);
+                                if(debug) printf("payload: %u\n", current_messages.data_transmission_handshake.payload);
                             }break;
 
                             case jpg_quality:
                             {
-                                data->push_back(    (float) current_messages.data_transmission_handshake.jpg_quality);
-                                printf("jpg_quality: %u\n", current_messages.data_transmission_handshake.jpg_quality);
+                                pthread_mutex_lock(&trava);
+                                data.push_back((float) current_messages.data_transmission_handshake.jpg_quality);
+                                pthread_mutex_unlock(&trava);
+                                if(debug) printf("jpg_quality: %u\n", current_messages.data_transmission_handshake.jpg_quality);
                             }break;
 
                             default:
                                 break;
                         }
-
-                        pthread_mutex_unlock(&trava);
                     }
                     break;
                 }
@@ -336,7 +354,7 @@ read_messages()
                     // uint16_t seqnr
                     // uint8_t data[253]
 
-                    // printf("MAVLINK_MSG_ID_ENCAPSULATED_DATA\n");
+                    // if(debug) printf("MAVLINK_MSG_ID_ENCAPSULATED_DATA\n");
                     mavlink_msg_encapsulated_data_decode(&message, &(current_messages.encapsulated_data));
                     current_messages.time_stamps.encapsulated_data = get_time_usec();
                     this_timestamps.encapsulated_data = current_messages.time_stamps.encapsulated_data;
@@ -360,14 +378,14 @@ read_messages()
                     // {1}: evita 'segmentation fault' ao acessar o vetor imgVector
                     if(packet >= (current_messages.data_transmission_handshake.packets - 1) && (imgVector.size() >= current_messages.data_transmission_handshake.size)){
 
-                        std::cout
-                                << "\nGerando imagem\n"
-                                << "packet: [" << packet << "]\n"
-                                << "packets: " << current_messages.data_transmission_handshake.packets << "\n"
-                                << "img.height: " << current_messages.data_transmission_handshake.height << "\n"
-                                << "img.width: " << current_messages.data_transmission_handshake.width << "\n"
-                                << "img pixel count: " << current_messages.data_transmission_handshake.height*current_messages.data_transmission_handshake.width << "\n"
-                                << "vector.size: " << imgVector.size() << "\n\n";
+                        if(debug)   std::cout
+                                    << "\nGerando imagem\n"
+                                    << "packet: [" << packet << "]\n"
+                                    << "packets: " << current_messages.data_transmission_handshake.packets << "\n"
+                                    << "img.height: " << current_messages.data_transmission_handshake.height << "\n"
+                                    << "img.width: " << current_messages.data_transmission_handshake.width << "\n"
+                                    << "img pixel count: " << current_messages.data_transmission_handshake.height*current_messages.data_transmission_handshake.width << "\n"
+                                    << "vector.size: " << imgVector.size() << "\n\n";
 
                         // Predefinição da imagem buffer
                         cv::Mat imgTemp(current_messages.data_transmission_handshake.height,
@@ -380,17 +398,18 @@ read_messages()
                                 // Mapeia o vetor unidimensional na matriz da imagem
                                 imgTemp.at<uchar>(y,x) = imgVector[x + y*imgTemp.cols];
 
-                        pthread_mutex_lock(&trava);
-
-                        if(msgUserFieldName) // VIDEO_ONLY set
+                        if(msgUserFieldName){ // VIDEO_ONLY set
                             // cria uma cópia da imagem
-                            // imgTemp.copyTo(*img);
-                            cv::resize(imgTemp, *img, cv::Size(2*376, 2*240));
-                        else
+                            pthread_mutex_lock(&trava);
+                            // imgTemp.copyTo(img);
+                            cv::resize(imgTemp, img, cv::Size(2*376, 2*240));
+                            pthread_mutex_unlock(&trava);
+                        }else{
                             // redimensiona a imagem: Size(64, 64) -> Size(480, 480), bilinear interpolation
-                            cv::resize(imgTemp, *img, cv::Size(480, 480));
-
-                        pthread_mutex_unlock(&trava);
+                            pthread_mutex_lock(&trava);
+                            cv::resize(imgTemp, img, cv::Size(480, 480));
+                            pthread_mutex_unlock(&trava);
+                        }
 
                         // Reset
                         packet = 0;
@@ -410,7 +429,7 @@ read_messages()
                     // uint8_t sensor_id
                     // uint8_t quality
 
-                    // printf("MAVLINK_MSG_ID_OPTICAL_FLOW\n");
+                    // if(debug) printf("MAVLINK_MSG_ID_OPTICAL_FLOW\n");
                     mavlink_msg_optical_flow_decode(&message, &(current_messages.optical_flow));
                     current_messages.time_stamps.optical_flow = get_time_usec();
                     this_timestamps.optical_flow = current_messages.time_stamps.optical_flow;
@@ -419,63 +438,75 @@ read_messages()
                         time_usec, sensor_id, flow_x, flow_y, flow_comp_m_x, flow_comp_m_y, quality, ground_distance
                     };
 
-                    pthread_mutex_lock(&trava);
-
                     switch(msgUserFieldName)
                     {
                         case time_usec:
                         {
-                            data->push_back(    (float) current_messages.optical_flow.time_usec); // (double) ?
-                            printf("time_usec: %lu\n",  current_messages.optical_flow.time_usec);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.optical_flow.time_usec); // (double) ?
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("time_usec: %lu\n", current_messages.optical_flow.time_usec);
                         }break;
 
                         case sensor_id:
                         {
-                            data->push_back(    (float) current_messages.optical_flow.sensor_id);
-                            printf("sensor_id: %u\n",   current_messages.optical_flow.sensor_id);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.optical_flow.sensor_id);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("sensor_id: %u\n", current_messages.optical_flow.sensor_id);
                         }break;
 
                         case flow_x:
                         {
-                            data->push_back((float) current_messages.optical_flow.flow_x);
-                            printf("flow_x: %d\n",  current_messages.optical_flow.flow_x);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.optical_flow.flow_x);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("flow_x: %d\n", current_messages.optical_flow.flow_x);
                         }break;
 
                         case flow_y:
                         {
-                            data->push_back((float) current_messages.optical_flow.flow_y);
-                            printf("flow_y: %d\n",  current_messages.optical_flow.flow_y);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.optical_flow.flow_y);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("flow_y: %d\n", current_messages.optical_flow.flow_y);
                         }break;
 
                         case flow_comp_m_x:
                         {
-                            data->push_back(                current_messages.optical_flow.flow_comp_m_x);
-                            printf("flow_comp_m_x: %f\n",   current_messages.optical_flow.flow_comp_m_x);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.optical_flow.flow_comp_m_x);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("flow_comp_m_x: %f\n", current_messages.optical_flow.flow_comp_m_x);
                         }break;
 
                         case flow_comp_m_y:
                         {
-                            data->push_back(                current_messages.optical_flow.flow_comp_m_y);
-                            printf("flow_comp_m_y: %f\n",   current_messages.optical_flow.flow_comp_m_y);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.optical_flow.flow_comp_m_y);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("flow_comp_m_y: %f\n", current_messages.optical_flow.flow_comp_m_y);
                         }break;
 
                         case quality:
                         {
-                            data->push_back((float) current_messages.optical_flow.quality);
-                            printf("quality: %u\n", current_messages.optical_flow.quality);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.optical_flow.quality);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("quality: %u\n", current_messages.optical_flow.quality);
                         }break;
 
                         case ground_distance:
                         {
-                            data->push_back(                current_messages.optical_flow.ground_distance);
-                            printf("ground_distance: %f\n", current_messages.optical_flow.ground_distance);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.optical_flow.ground_distance);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("ground_distance: %f\n", current_messages.optical_flow.ground_distance);
                         }break;
 
                         default:
                             break;
                     }
-
-                    pthread_mutex_unlock(&trava);
 
                     break;
                 }
@@ -495,7 +526,7 @@ read_messages()
                     // uint8_t sensor_id
                     // uint8_t quality
 
-                    // printf("MAVLINK_MSG_ID_OPTICAL_FLOW_RAD\n");
+                    // if(debug) printf("MAVLINK_MSG_ID_OPTICAL_FLOW_RAD\n");
                     mavlink_msg_optical_flow_rad_decode(&message, &(current_messages.optical_flow_rad));
                     current_messages.time_stamps.optical_flow_rad = get_time_usec();
                     this_timestamps.optical_flow_rad = current_messages.time_stamps.optical_flow_rad;
@@ -505,87 +536,107 @@ read_messages()
                         integrated_ygyro, integrated_zgyro, temperature, quality, time_delta_distance_us, distance
                     };
 
-                    pthread_mutex_lock(&trava);
-
                     switch(msgUserFieldName)
                     {
                         case time_usec:
                         {
-                            data->push_back(    (float) current_messages.optical_flow_rad.time_usec);
-                            printf("time_usec: %lu\n",  current_messages.optical_flow_rad.time_usec);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.optical_flow_rad.time_usec);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("time_usec: %lu\n", current_messages.optical_flow_rad.time_usec);
                         }break;
 
                         case sensor_id:
                         {
-                            data->push_back(    (float) current_messages.optical_flow_rad.sensor_id);
-                            printf("sensor_id: %u\n",   current_messages.optical_flow_rad.sensor_id);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.optical_flow_rad.sensor_id);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("sensor_id: %u\n", current_messages.optical_flow_rad.sensor_id);
                         }break;
 
                         case integration_time_us:
                         {
-                            data->push_back(            (float) current_messages.optical_flow_rad.integration_time_us);
-                            printf("integration_time_us: %u\n", current_messages.optical_flow_rad.integration_time_us);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.optical_flow_rad.integration_time_us);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("integration_time_us: %u\n", current_messages.optical_flow_rad.integration_time_us);
                         }break;
 
                         case integrated_x:
                         {
-                            data->push_back(            current_messages.optical_flow_rad.integrated_x);
-                            printf("integrated_x: %f\n",current_messages.optical_flow_rad.integrated_x);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.optical_flow_rad.integrated_x);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("integrated_x: %f\n", current_messages.optical_flow_rad.integrated_x);
                         }break;
 
                         case integrated_y:
                         {
-                            data->push_back(            current_messages.optical_flow_rad.integrated_y);
-                            printf("integrated_y: %f\n",current_messages.optical_flow_rad.integrated_y);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.optical_flow_rad.integrated_y);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("integrated_y: %f\n", current_messages.optical_flow_rad.integrated_y);
                         }break;
 
                         case integrated_xgyro:
                         {
-                            data->push_back(                current_messages.optical_flow_rad.integrated_xgyro);
-                            printf("integrated_xgyro: %f\n",current_messages.optical_flow_rad.integrated_xgyro);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.optical_flow_rad.integrated_xgyro);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("integrated_xgyro: %f\n", current_messages.optical_flow_rad.integrated_xgyro);
                         }break;
 
                         case integrated_ygyro:
                         {
-                            data->push_back(                current_messages.optical_flow_rad.integrated_ygyro);
-                            printf("integrated_ygyro: %f\n",current_messages.optical_flow_rad.integrated_ygyro);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.optical_flow_rad.integrated_ygyro);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("integrated_ygyro: %f\n", current_messages.optical_flow_rad.integrated_ygyro);
                         }break;
 
                         case integrated_zgyro:
                         {
-                            data->push_back(                current_messages.optical_flow_rad.integrated_zgyro);
-                            printf("integrated_zgyro: %f\n",current_messages.optical_flow_rad.integrated_zgyro);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.optical_flow_rad.integrated_zgyro);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("integrated_zgyro: %f\n", current_messages.optical_flow_rad.integrated_zgyro);
                         }break;
 
                         case temperature:
                         {
-                            data->push_back(    (float) current_messages.optical_flow_rad.temperature);
-                            printf("temperature: %d\n", current_messages.optical_flow_rad.temperature);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.optical_flow_rad.temperature);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("temperature: %d\n", current_messages.optical_flow_rad.temperature);
                         }break;
 
                         case quality:
                         {
-                            data->push_back((float) current_messages.optical_flow_rad.quality);
-                            printf("quality: %u\n", current_messages.optical_flow_rad.quality);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.optical_flow_rad.quality);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("quality: %u\n", current_messages.optical_flow_rad.quality);
                         }break;
 
                         case time_delta_distance_us:
                         {
-                            data->push_back(                (float) current_messages.optical_flow_rad.time_delta_distance_us);
-                            printf("time_delta_distance_us: %u\n",  current_messages.optical_flow_rad.time_delta_distance_us);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.optical_flow_rad.time_delta_distance_us);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("time_delta_distance_us: %u\n", current_messages.optical_flow_rad.time_delta_distance_us);
                         }break;
 
                         case distance:
                         {
-                            data->push_back(        current_messages.optical_flow_rad.distance);
-                            printf("distance: %f\n",current_messages.optical_flow_rad.distance);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.optical_flow_rad.distance);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("distance: %f\n", current_messages.optical_flow_rad.distance);
                         }break;
 
                         default:
                             break;
                     }
-
-                    pthread_mutex_unlock(&trava);
 
                     break;
                 }
@@ -598,7 +649,7 @@ read_messages()
                     // float z
                     // char name[10]
 
-                    // printf("MAVLINK_MSG_ID_DEBUG_VECT\n");
+                    // if(debug) printf("MAVLINK_MSG_ID_DEBUG_VECT\n");
                     mavlink_msg_debug_vect_decode(&message, &(current_messages.debug_vect));
                     current_messages.time_stamps.debug_vect = get_time_usec();
                     this_timestamps.debug_vect = current_messages.time_stamps.debug_vect;
@@ -607,44 +658,48 @@ read_messages()
                         name, time_usec, x, y, z
                     };
 
-                    pthread_mutex_lock(&trava);
-
                     switch(msgUserFieldName)
                     {
                         case name:
                         {
-                            printf("name: %s\n", current_messages.debug_vect.name);
+                            if(debug) printf("name: %s\n", current_messages.debug_vect.name);
                         }break;
 
                         case time_usec:
                         {
-                            data->push_back(    (float) current_messages.debug_vect.time_usec);
-                            printf("time_usec: %lu\n",  current_messages.debug_vect.time_usec);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.debug_vect.time_usec);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("time_usec: %lu\n", current_messages.debug_vect.time_usec);
                         }break;
 
                         case x:
                         {
-                            data->push_back(    current_messages.debug_vect.x);
-                            printf("x: %f\n",   current_messages.debug_vect.x);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.debug_vect.x);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("x: %f\n", current_messages.debug_vect.x);
                         }break;
 
                         case y:
                         {
-                            data->push_back(    current_messages.debug_vect.y);
-                            printf("y: %f\n",   current_messages.debug_vect.y);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.debug_vect.y);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("y: %f\n", current_messages.debug_vect.y);
                         }break;
 
                         case z:
                         {
-                            data->push_back(    current_messages.debug_vect.z);
-                            printf("z: %f\n",   current_messages.debug_vect.z);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.debug_vect.z);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("z: %f\n", current_messages.debug_vect.z);
                         }break;
 
                         default:
                             break;
                     }
-
-                    pthread_mutex_unlock(&trava);
 
                     break;
                 }
@@ -655,7 +710,7 @@ read_messages()
                     // float value
                     // char name[10]
 
-                    // printf("MAVLINK_MSG_ID_NAMED_VALUE_FLOAT\n");
+                    // if(debug) printf("MAVLINK_MSG_ID_NAMED_VALUE_FLOAT\n");
                     mavlink_msg_named_value_float_decode(&message, &(current_messages.named_value_float));
                     current_messages.time_stamps.named_value_float = get_time_usec();
                     this_timestamps.named_value_float = current_messages.time_stamps.named_value_float;
@@ -664,32 +719,32 @@ read_messages()
                         time_boot_ms, name, value
                     };
 
-                    pthread_mutex_lock(&trava);
-
                     switch(msgUserFieldName)
                     {
                         case time_boot_ms:
                         {
-                            data->push_back((float) current_messages.named_value_float.time_boot_ms);
-                            printf("time_boot_ms: %u\n", current_messages.named_value_float.time_boot_ms);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.named_value_float.time_boot_ms);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("time_boot_ms: %u\n", current_messages.named_value_float.time_boot_ms);
                         }break;
 
                         case name:
                         {
-                            printf("name: %s\n", current_messages.named_value_float.name);
+                            if(debug) printf("name: %s\n", current_messages.named_value_float.name);
                         }break;
 
                         case value:
                         {
-                            data->push_back(        current_messages.named_value_float.value);
-                            printf("value: %f\n",   current_messages.named_value_float.value);
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.named_value_float.value);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("value: %f\n", current_messages.named_value_float.value);
                         }break;
 
                         default:
                             break;
                     }
-
-                    pthread_mutex_unlock(&trava);
 
                     break;
                 }
@@ -700,7 +755,7 @@ read_messages()
                     // int32_t value
                     // char name[10]
 
-                    // printf("MAVLINK_MSG_ID_NAMED_VALUE_INT\n");
+                    // if(debug) printf("MAVLINK_MSG_ID_NAMED_VALUE_INT\n");
                     mavlink_msg_named_value_int_decode(&message, &(current_messages.named_value_int));
                     current_messages.time_stamps.named_value_int = get_time_usec();
                     this_timestamps.named_value_int = current_messages.time_stamps.named_value_int;
@@ -709,32 +764,32 @@ read_messages()
                         time_boot_ms, name, value
                     };
 
-                    pthread_mutex_lock(&trava);
-
                     switch(msgUserFieldName)
                     {
                         case time_boot_ms:
                         {
-                            data->push_back((float) current_messages.named_value_int.time_boot_ms);
-                            printf("time_boot_ms: %u\n", current_messages.named_value_int.time_boot_ms);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.named_value_int.time_boot_ms);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("time_boot_ms: %u\n", current_messages.named_value_int.time_boot_ms);
                         }break;
 
                         case name:
                         {
-                            printf("name: %s\n", current_messages.named_value_int.name);
+                            if(debug) printf("name: %s\n", current_messages.named_value_int.name);
                         }break;
 
                         case value:
                         {
-                            data->push_back((float) current_messages.named_value_int.value);
-                            printf("value: %d\n", current_messages.named_value_int.value);
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.named_value_int.value);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("value: %d\n", current_messages.named_value_int.value);
                         }break;
 
                         default:
                             break;
                     }
-
-                    pthread_mutex_unlock(&trava);
 
                     break;
                 }

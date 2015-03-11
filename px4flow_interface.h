@@ -162,7 +162,7 @@ class PX4Flow_Interface
 public:
 
     PX4Flow_Interface(){};
-    PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, std::vector<float> *data_, cv::Mat *img_);
+    PX4Flow_Interface(Serial_Port *serial_port_, int msgID_, int msgFieldName_, bool state);
     ~PX4Flow_Interface();
 
     char reading_status;
@@ -177,11 +177,12 @@ public:
     int msgUserID;
     int msgUserFieldName;
 
-    std::vector<uint8_t> imgVector;
-    std::vector<float> *data;
+    std::vector<float> data;
 
+    cv::Mat img;
     uint16_t packet;
-    cv::Mat *img;
+    std::vector<uint8_t> imgVector;
+
     pthread_mutex_t trava;
 
     Mavlink_Messages current_messages;
@@ -209,6 +210,8 @@ private:
     Serial_Port *serial_port;
 
     bool time_to_exit;
+
+    bool debug;
 
     pthread_t read_tid;
     pthread_t write_tid;
