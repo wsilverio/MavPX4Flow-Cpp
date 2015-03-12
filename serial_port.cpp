@@ -38,19 +38,21 @@
 //   Con/De structors
 // ------------------------------------------------------------------------------
 Serial_Port::
-Serial_Port(char *&uart_name_ , int &baudrate_)
+Serial_Port(char *&uart_name_ , int &baudrate_, bool state)
 {
     initialize_defaults();
     uart_name = uart_name_;
     baudrate  = baudrate_;
+    debug = state;
 }
 
 Serial_Port::
-Serial_Port(std::string uart_name_, int &baudrate_)
+Serial_Port(std::string uart_name_, int &baudrate_, bool state)
 {
     initialize_defaults();
     uart_name = (char*) uart_name_.c_str();
     baudrate  = baudrate_;
+    debug = state;
 }
 
 Serial_Port::

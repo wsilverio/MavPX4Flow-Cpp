@@ -89,8 +89,8 @@ class Serial_Port
 public:
 
     Serial_Port();
-    Serial_Port(char *&uart_name_, int &baudrate_);
-    Serial_Port(std::string uart_name_, int &baudrate_);
+    Serial_Port(char *&uart_name_, int &baudrate_, bool state);
+    Serial_Port(std::string uart_name_, int &baudrate_, bool state);
     void initialize_defaults();
     ~Serial_Port();
 
