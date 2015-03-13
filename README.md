@@ -4,9 +4,7 @@
 
 Clone e inicialização:
 ```
-$ git clone https://github.com/wsilverio/MavPX4Flow-Cpp.git
-$ cd MavPX4Flow-Cpp
-$ git submodule update --init
+$ git clone --recursive https://github.com/wsilverio/MavPX4Flow-Cpp.git
 ```
 Se desejar, altere o tamanho da tela, no arquivo [main.cpp](https://github.com/wsilverio/MavPX4Flow-Cpp/blob/master/main.cpp):
 ```cpp
