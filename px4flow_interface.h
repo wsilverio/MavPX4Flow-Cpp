@@ -68,9 +68,11 @@ struct Time_Stamps
     uint64_t encapsulated_data;
     uint64_t optical_flow;
     uint64_t optical_flow_rad;
+    uint64_t local_position_ned;
     uint64_t debug_vect;
     uint64_t named_value_float;
     uint64_t named_value_int;
+    uint64_t statustext;
 
     void
     reset_timestamps()
@@ -81,9 +83,11 @@ struct Time_Stamps
         encapsulated_data = 0;
         optical_flow = 0;
         optical_flow_rad = 0;
+        local_position_ned = 0;
         debug_vect = 0;
         named_value_float = 0;
         named_value_int = 0;
+        statustext = 0;
     }
 
 };
@@ -111,6 +115,8 @@ struct Mavlink_Messages {
     // Optical Flow Rad
     mavlink_optical_flow_rad_t optical_flow_rad;
 
+    // Local Position Ned
+    mavlink_local_position_ned_t local_position_ned;
     // Debug Vect
     mavlink_debug_vect_t debug_vect;
 
@@ -124,6 +130,9 @@ struct Mavlink_Messages {
     mavlink_param_value_t param_value;
     
     std::vector<mavlink_param_value_t> vector_param_value;
+
+    // Status Text
+    mavlink_statustext_t statustext;
 
     // System Parameters?
 
@@ -200,7 +209,7 @@ public:
     void start_write_thread(void);
 
     void param_request_list(void);
-    void set_video_only(float val);
+    void set_param(const char * param_id, float val);
 
     void handle_quit( int sig );
 

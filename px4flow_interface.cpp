@@ -658,6 +658,93 @@ read_messages()
                     break;
                 }
 
+                case MAVLINK_MSG_ID_LOCAL_POSITION_NED: // #32
+                {
+                    // uint32_t time_boot_ms
+                    // float x
+                    // float y
+                    // float z
+                    // float vx
+                    // float vy
+                    // float vz
+
+                    // if(debug) printf("MAVLINK_MSG_ID_LOCAL_POSITION_NED\n");
+                    mavlink_msg_local_position_ned_decode(&message, &(current_messages.local_position_ned));
+                    current_messages.time_stamps.local_position_ned = get_time_usec();
+                    this_timestamps.local_position_ned = current_messages.time_stamps.local_position_ned;
+
+                    if(message.msgid != msgUserID)
+                        break;
+
+                    enum Fields{
+                        time_boot_ms, x, y, z, vx, vy, vz
+                    };
+
+                    switch(msgUserFieldName)
+                    {
+                        case time_boot_ms:
+                        {
+                            pthread_mutex_lock(&trava);
+                            data.push_back((float) current_messages.local_position_ned.time_boot_ms);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("time_boot_ms: %u\n", current_messages.local_position_ned.time_boot_ms);
+                        }break;
+
+                        case x:
+                        {
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.local_position_ned.x);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("x: %f\n", current_messages.local_position_ned.x);
+                        }break;
+
+                        case y:
+                        {
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.local_position_ned.y);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("y: %f\n", current_messages.local_position_ned.y);
+                        }break;
+
+                        case z:
+                        {
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.local_position_ned.z);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("z: %f\n", current_messages.local_position_ned.z);
+                        }break;
+
+                        case vx:
+                        {
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.local_position_ned.vx);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("vx: %f\n", current_messages.local_position_ned.vx);
+                        }break;
+
+                        case vy:
+                        {
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.local_position_ned.vy);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("vy: %f\n", current_messages.local_position_ned.vy);
+                        }break;
+
+                        case vz:
+                        {
+                            pthread_mutex_lock(&trava);
+                            data.push_back(current_messages.local_position_ned.vz);
+                            pthread_mutex_unlock(&trava);
+                            if(debug) printf("vz: %f\n", current_messages.local_position_ned.vz);
+                        }break;
+
+                        default:
+                            break;
+                    }
+
+                    break;
+                }
+
                 case MAVLINK_MSG_ID_DEBUG_VECT: // #250
                 {
                     // uint64_t time_usec
@@ -820,9 +907,31 @@ read_messages()
                     break;
                 }
 
+                case MAVLINK_MSG_ID_STATUSTEXT: // #253
+                {
+
+                    // uint8_t severity
+                    // char text[50]
+                    // if(debug) printf("MAVLINK_MSG_ID_STATUSTEXT\n");
+                    mavlink_msg_statustext_decode(&message, &(current_messages.statustext));
+                    current_messages.time_stamps.statustext = get_time_usec();
+                    this_timestamps.statustext = current_messages.time_stamps.statustext;
+
+                    if(debug)
+                        printf( "STATUS TEXT:\n"
+                                "severity: %d\n"
+                                "text: %s\n\n",
+                                current_messages.statustext.severity,
+                                current_messages.statustext.text);
+
+                    break;
+                }
+
                 default:
                 {
-                    printf("Warning, did not handle message id %i\n", message.msgid);
+                    // if(debug)
+                        printf("Warning, did not handle message id %i\n", message.msgid);
+
                     break;
                 }
 
@@ -1038,13 +1147,16 @@ start()
 
     if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA){
         // Configura o tipo da imagem
-        this->set_video_only(msgUserFieldName);
+        this->set_param("VIDEO_ONLY", msgUserFieldName);
     }
     else{
         // Desabilita VIDEO_ONLY
-        this->set_video_only(0);
-        
-        if(msgUserID == MAVLINK_MSG_ID_PARAM_VALUE){
+        this->set_param("VIDEO_ONLY", 0);
+
+        if (msgUserID == MAVLINK_MSG_ID_LOCAL_POSITION_NED){
+            this->set_param("SYS_SEND_LPOS", 1);
+        }
+        else if(msgUserID == MAVLINK_MSG_ID_PARAM_VALUE){
             // Solicita todos os parâmetros da PX4Flow
             this->param_request_list();
         }
@@ -1140,7 +1252,7 @@ handle_quit( int sig )
     if(msgUserID == MAVLINK_MSG_ID_ENCAPSULATED_DATA && msgUserFieldName){
         // Desabilita VIDEO_ONLY
         if (debug) printf("Desabilitando modo VIDEO_ONLY\n");
-        this->set_video_only(0);
+        this->set_param("VIDEO_ONLY", 0);
         usleep(500000); // 500ms
     }
 
@@ -1239,7 +1351,7 @@ param_request_list(void)
 // ------------------------------------------------------------------------------
 void
 PX4Flow_Interface::
-set_video_only(float val)
+set_param(const char * param_id, float val)
 {
     // Configura o tipo da imagem
     // se msgUserFieldName == True: full size image
@@ -1253,10 +1365,11 @@ set_video_only(float val)
     param.target_component = px4flow_id;
     // param.param_type;
 
+    // ex:
     // https://github.com/PX4/Flow/blob/master/src/settings.c
     //      global_data.param_name[PARAM_VIDEO_ONLY]
     //          "VIDEO_ONLY"
-    strcpy(param.param_id, "VIDEO_ONLY");
+    strcpy(param.param_id, param_id);
         
     mavlink_msg_param_set_encode(this->system_id, this->px4flow_id, &msg, &param);
     this->write_message(msg);
