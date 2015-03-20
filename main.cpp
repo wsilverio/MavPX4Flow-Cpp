@@ -173,13 +173,14 @@ int main(int argc, char **argv){
             ENCAPSULATED_DATA,
             OPTICAL_FLOW,
             OPTICAL_FLOW_RAD,
+            LOCAL_POSITION_NED,
             DEBUG_VECT,
             NAMED_VALUE_FLOAT,
             NAMED_VALUE_INT,
             PARAM_VALUE
         };
 
-        const int TAM = 9;
+        const int TAM = 10;
         const char *names[TAM] = 
         {
             "HEARTBEAT",
@@ -187,6 +188,7 @@ int main(int argc, char **argv){
             "ENCAPSULATED_DATA",
             "OPTICAL_FLOW",
             "OPTICAL_FLOW_RAD",
+            "LOCAL_POSITION_NED",
             "DEBUG_VECT",
             "NAMED_VALUE_FLOAT",
             "NAMED_VALUE_INT",
@@ -360,6 +362,35 @@ int main(int argc, char **argv){
                 }
 
                 windowName += fields[msgFieldName];
+
+            }
+            break;
+
+            case LOCAL_POSITION_NED:
+            {
+                msgID = MAVLINK_MSG_ID_LOCAL_POSITION_NED;
+                windowName = "LOCAL_POSITION_NED";
+
+                const int TAM = 7;
+                const char *fields[TAM] = {"time_boot_ms", "x", "y", "z", "vx", "vy", "vz"};
+                
+                printf("\nEscolha o Field Name da mensagem:\n\n");
+                
+                for (int i = 0; i < TAM; ++i){
+                    printf("{%d} %s\n", i, fields[i]);
+                }                
+
+                printf("Field Name: ");                
+                
+                msgFieldName = -1;
+                scanf("%d", &msgFieldName);
+
+                if (msgFieldName < 0 || msgFieldName >= TAM){
+                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
+                    throw EXIT_FAILURE;
+                }
+
+                windowName += fields[msgFieldName];                
 
             }
             break;
