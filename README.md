@@ -6,11 +6,11 @@ Clone e inicialização:
 ```
 $ git clone --recursive https://github.com/wsilverio/MavPX4Flow-Cpp.git
 ```
-Se desejar, altere o tamanho da tela, no arquivo [main.cpp](https://github.com/wsilverio/MavPX4Flow-Cpp/blob/master/main.cpp):
+Se desejar, altere o tamanho da janela, no arquivo [main.cpp](https://github.com/wsilverio/MavPX4Flow-Cpp/blob/master/main.cpp#L511):
 ```cpp
 // Parâmetros da imagem
-#define WIDTH 1280
-#define HEIGHT 720
+WIDTH = 1200;
+HEIGHT = 600;
 ```
 
 Uso:
@@ -20,7 +20,7 @@ $ ./mavpx4flow.run -d <dispositivo> -b <baudrate> [--debug]
 ```
 Exemplo:
 ```
-$ ./mavpx4flow.run -d /dev/ttyACM0 -b 57600
+$ ./mavpx4flow.run -d /dev/ttyACM0 -b 115200
 ```
 
 Ou altere o gatilho **run-teste** do arquivo [makefile](https://github.com/wsilverio/MavPX4Flow-Cpp/blob/master/makefile) e execute:
