@@ -497,9 +497,20 @@ int main(int argc, char **argv){
             break; // ?
         }
 
-        // Parâmetros da imagem
-        #define WIDTH 1280
-        #define HEIGHT 720
+        // Parâmetros da imagem/janela
+        int WIDTH, HEIGHT;
+
+        if(msgID == MAVLINK_MSG_ID_ENCAPSULATED_DATA){
+            if (msgFieldName){ // VIDEO_ONLY
+                WIDTH = 752;
+                HEIGHT = 480;
+            }else{
+                WIDTH = HEIGHT = 480;
+            }
+        }else{
+            WIDTH = 1200;
+            HEIGHT = 600;
+        }
         
         // Parâmetros do monitor do usuário
         Display *display = XOpenDisplay(NULL);
@@ -554,7 +565,7 @@ int main(int argc, char **argv){
                     while(px4flow.data.size() < 2);
                 }
 
-                // Últimos WIDTH elementos do buffer
+                // Últimos "WIDTH" elementos do buffer
                 if (px4flow.data.size() > WIDTH)
                     px4flow.data.erase(px4flow.data.begin(), px4flow.data.end() - WIDTH);
     
@@ -586,8 +597,10 @@ int main(int argc, char **argv){
                     if(c == 27) Quit_Handler(c); // ESC key
                 }while(not px4flow.img.rows && not px4flow.img.cols); // aguarda imagem válida
 
+                // Rotaciona a imagem (direção y)
+                cv::flip(px4flow.img, imagemPlot, -1);
                 // Exibe a imagem
-                cv::imshow(windowName, px4flow.img);
+                cv::imshow(windowName, imagemPlot);
 
             }
             
