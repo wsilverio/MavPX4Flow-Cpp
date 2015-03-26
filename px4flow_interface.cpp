@@ -413,7 +413,7 @@ read_messages()
                             // cria uma cópia da imagem
                             pthread_mutex_lock(&trava);
                             // imgTemp.copyTo(img);
-                            cv::resize(imgTemp, img, cv::Size(2*376, 2*240));
+                            cv::resize(imgTemp, img, cv::Size(752, 480));
                             pthread_mutex_unlock(&trava);
                         }else{
                             // redimensiona a imagem: Size(64, 64) -> Size(480, 480), bilinear interpolation
