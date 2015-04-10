@@ -228,7 +228,7 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
+                    printf("\n*** Erro: Field Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
@@ -257,7 +257,7 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
+                    printf("\n*** Erro: Field Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
@@ -286,7 +286,7 @@ int main(int argc, char **argv){
                 // scanf("%d", &msgFieldName);
 
                 // if (msgFieldName < 0 || msgFieldName >= TAM){
-                //     printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
+                //     printf("\n*** Erro: Field Name desconhecido ou ainda não implementado ***\n\n");
                 //     throw EXIT_FAILURE;
                 // }
 
@@ -327,7 +327,7 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
+                    printf("\n*** Erro: Field Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
@@ -357,7 +357,7 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
+                    printf("\n*** Erro: Field Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
@@ -386,7 +386,7 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
+                    printf("\n*** Erro: Field Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
@@ -415,7 +415,7 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
+                    printf("\n*** Erro: Field Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
@@ -444,7 +444,7 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
+                    printf("\n*** Erro: Field Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
@@ -473,7 +473,7 @@ int main(int argc, char **argv){
                 scanf("%d", &msgFieldName);
 
                 if (msgFieldName < 0 || msgFieldName >= TAM){
-                    printf("\n*** Erro: Fiel Name desconhecido ou ainda não implementado ***\n\n");
+                    printf("\n*** Erro: Field Name desconhecido ou ainda não implementado ***\n\n");
                     throw EXIT_FAILURE;
                 }
 
