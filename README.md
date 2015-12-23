@@ -13,6 +13,11 @@ WIDTH = 1200;
 HEIGHT = 600;
 ```
 
+O usuário deve fazer parte do grupo `dialout`
+```
+$ sudo usermod -a -G dialout <user> #necessário reiniciar a sessão
+```
+
 Uso:
 ```
 $ make
